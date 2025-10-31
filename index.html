@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão Financeira Pessoal</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="static/css/styles.css"/>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Inicializar dados fictícios no localStorage
+        const initializeMockData = () => {
+            if (!localStorage.getItem('categories')) {
+                const mockCategories = [
+                    { id: 1, name: 'Alimentação', type: 'despesa' },
+                    { id: 2, name: 'Transporte', type: 'despesa' },
+                    { id: 3, name: 'Moradia', type: 'despesa' },
+                    { id: 4, name: 'Salário', type: 'receita' },
+                    { id: 5, name: 'Freelance', type: 'receita' }
+                ];
+                localStorage.setItem('categories', JSON.stringify(mockCategories));
+            }
+
+            if (!localStorage.getItem('expenses')) {
+                const mockExpenses = [
+                    { id: 1, description: 'Supermercado', amount: 450.00, categoryId: 1, date: '2025-10-15', type: 'despesa' },
+                    { id: 2, description: 'Uber', amount: 35.50, categoryId: 2, date: '2025-10-20', type: 'despesa' },
+                    { id: 3, description: 'Aluguel', amount: 1500.00, categoryId: 3, date: '2025-10-05', type: 'despesa' }
+                ];
+                localStorage.setItem('expenses', JSON.stringify(mockExpenses));
+            }
+
+            if (!localStorage.getItem('fixedExpenses')) {
+                const mockFixedExpenses = [
+                    { id: 1, description: 'Aluguel', amount: 1500.00, categoryId: 3, dayOfMonth: 5 },
+                    { id: 2, description: 'Internet', amount: 100.00, categoryId: 3, dayOfMonth: 10 },
+                    { id: 3, description: 'Academia', amount: 90.00, categoryId: 3, dayOfMonth: 1 }
+                ];
+                localStorage.setItem('fixedExpenses', JSON.stringify(mockFixedExpenses));
+            }
+
+            if (!localStorage.getItem('income')) {
+                const mockIncome = {
+                    fixed: 5000.00,
+                    variable: [
+                        { id: 1, description: 'Projeto Freelance', amount: 1500.00, validUntil: '2025-12-31' }
+                    ],
+                    
+                };
+                localStorage.setItem('income', JSON.stringify(mockIncome));
+            }
+        };
+
+        initializeMockData();
+
+        const App = () => {
+            const [isAuthenticated, setIsAuthenticated] = useState(false);
+            const [currentUser, setCurrentUser] = useState(null);
+            const [currentView, setCurrentView] = useState('dashboard');
+            const [sidebarOpen, setSidebarOpen] = useState(false);
+
+            useEffect(() => {
+                const user = localStorage.getItem('currentUser');
+                if (user) {
+                    setCurrentUser(JSON.parse(user));
+                    setIsAuthenticated(true);
+                }
+            }, []);
+
+            const handleLogin = (userData) => {
+                localStorage.setItem('currentUser', JSON.stringify(userData));
+                setCurrentUser(userData);
+                setIsAuthenticated(true);
+            };
+
+            const handleLogout = () => {
+                localStorage.removeItem('currentUser');
+                setCurrentUser(null);
+                setIsAuthenticated(false);
+                setCurrentView('dashboard');
+            };
+
+            if (!isAuthenticated) {
+                return <LoginScreen onLogin={handleLogin} />;
+            }
+
+            return (
+                <div className="app-container">
+                    <button className="hamburger" onClick={() => setSidebarOpen(!sidebarOpen)}>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    
+                    <Sidebar 
+                        currentView={currentView} 
+                        setCurrentView={setCurrentView}
+                        onLogout={handleLogout}
+                        isOpen={sidebarOpen}
+                    />
+                    
+                    <div className="main-content">
+                        <MainContent 
+                            currentView={currentView}
+                            currentUser={currentUser}
+                            setCurrentUser={setCurrentUser}
+                        />
+                    </div>
+                </div>
+            );
+        };
+
+        const LoginScreen = ({ onLogin }) => {
+            const [isRegister, setIsRegister] = useState(false);
+            const [formData, setFormData] = useState({
+                name: '',
+                email: '',
+                password: ''
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                
+                if (isRegister) {
+                    const users = JSON.parse(localStorage.getItem('users') || '[]');
+                    const newUser = {
+                        id: Date.now(),
+                        ...formData,
+                        avatar: formData.name.charAt(0).toUpperCase()
+                    };
+                    users.push(newUser);
+                    localStorage.setItem('users', JSON.stringify(users));
+                    onLogin(newUser);
+                } else {
+                    const users = JSON.parse(localStorage.getItem('users') || '[]');
+                    const user = users.find(u => u.email === formData.email && u.password === formData.password);
+                    
+                    if (user) {
+                        onLogin(user);
+                    } else {
+                        // Para teste, criar um usuário padrão
+                        const defaultUser = {
+                            id: 1,
+                            name: 'Usuário Teste',
+                            email: formData.email || 'teste@teste.com',
+                            password: formData.password || '123456',
+                            avatar: 'U'
+                        };
+                        onLogin(defaultUser);
+                    }
+                }
+            };
+
+            return (
+                <div className="login-container">
+                    <div className="login-box">
+                        <h2>{isRegister ? 'Cadastro' : 'Login'}</h2>
+                        <form onSubmit={handleSubmit}>
+                            {isRegister && (
+                                <div className="form-group">
+                                    <label>Nome</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                    />
+                                </div>
+                            )}
+                            <div className="form-group">
+                                <label>Email</label>
+                                <input
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                    placeholder="Digite qualquer email para teste"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Senha</label>
+                                <input
+                                    type="password"
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                                    placeholder="Digite qualquer senha para teste"
+                                />
+                            </div>
+                            <button type="submit" className="btn" style={{width: '100%', marginBottom: '15px'}}>
+                                {isRegister ? 'Cadastrar' : 'Entrar'}
+                            </button>
+                        </form>
+                        <button 
+                            onClick={() => setIsRegister(!isRegister)}
+                            style={{background: 'none', border: 'none', color: '#52dbf1', cursor: 'pointer', width: '100%', textAlign: 'center'}}
+                        >
+                            {isRegister ? 'Já tem conta? Faça login' : 'Não tem conta? Cadastre-se'}
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const Sidebar = ({ currentView, setCurrentView, onLogout, isOpen }) => {
+            const menuItems = [
+                { id: 'dashboard', label: 'Dashboard' },
+                { id: 'categories', label: 'Categorias' },
+                { id: 'expenses', label: 'Lançamentos' },
+                { id: 'fixedExpenses', label: 'Despesas Fixas' },
+                { id: 'income', label: 'Receitas' },
+                { id: 'reports', label: 'Relatórios' },
+                { id: 'analysis', label: 'Análises' },
+                { id: 'settings', label: 'Configurações' }
+            ];
+
+            return (
+                <div className={`sidebar ${isOpen ? 'active' : ''}`}>
+                    <div className="sidebar-header">
+                        <h2>FinControl</h2>
+                    </div>
+                    {menuItems.map(item => (
+                        <button
+                            key={item.id}
+                            className={`menu-item ${currentView === item.id ? 'active' : ''}`}
+                            onClick={() => setCurrentView(item.id)}
+                        >
+                            {item.label}
+                        </button>
+                    ))}
+                    <button className="menu-item" onClick={onLogout}>
+                        Sair
+                    </button>
+                </div>
+            );
+        };
+
+        const MainContent = ({ currentView, currentUser, setCurrentUser }) => {
+            switch(currentView) {
+                case 'dashboard':
+                    return <Dashboard />;
+                case 'categories':
+                    return <Categories />;
+                case 'expenses':
+                    return <Expenses />;
+                case 'fixedExpenses':
+                    return <FixedExpenses />;
+                case 'income':
+                    return <Income />;
+                case 'reports':
+                    return <Reports />;
+                case 'analysis':
+                    return <Analysis />;
+                case 'settings':
+                    return <Settings currentUser={currentUser} setCurrentUser={setCurrentUser} />;
+                default:
+                    return <Dashboard />;
+            }
+        };
+
+        const Dashboard = () => {
+            const [stats, setStats] = useState({
+                totalIncome: 0,
+                totalExpenses: 0,
+                balance: 0,
+                monthExpenses: []
+            });
+
+            useEffect(() => {
+                const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+                const income = JSON.parse(localStorage.getItem('income') || '{}');
+                
+                const currentMonth = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
+                
+                const monthExpenses = expenses.filter(e => {
+                    const date = new Date(e.date);
+                    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+                });
+
+                const totalExpenses = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+                const totalIncome = (income.fixed || 0) + 
+                    (income.variable?.reduce((sum, v) => sum + v.amount, 0) || 0);
+            
+
+                setStats({
+                    totalIncome,
+                    totalExpenses,
+                    balance: totalIncome - totalExpenses,
+                    monthExpenses
+                });
+            }, []);
+
+            return (
+                <div>
+                    <h1 style={{color: '#333', marginBottom: '30px'}}>Dashboard</h1>
+                    
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <h4>Receita Total</h4>
+                            <div className="value">R$ {stats.totalIncome.toFixed(2)}</div>
+                        </div>
+                        <div className="stat-card">
+                            <h4>Despesas Total</h4>
+                            <div className="value">R$ {stats.totalExpenses.toFixed(2)}</div>
+                        </div>
+                        <div className="stat-card">
+                            <h4>Saldo</h4>
+                            <div className="value">R$ {stats.balance.toFixed(2)}</div>
+                        </div>
+                    </div>
+
+                    <div className="dashboard-card">
+                        <h3>Lançamentos do Mês</h3>
+                        {stats.monthExpenses.length > 0 ? (
+                            <div className="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Descrição</th>
+                                            <th>Categoria</th>
+                                            <th>Valor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {stats.monthExpenses.map(expense => {
+                                            const categories = JSON.parse(localStorage.getItem('categories') || '[]');
+                                            const category = categories.find(c => c.id === expense.categoryId);
+                                            return (
+                                                <tr key={expense.id}>
+                                                    <td>{new Date(expense.date).toLocaleDateString('pt-BR')}</td>
+                                                    <td>{expense.description}</td>
+                                                    <td>{category?.name || 'Sem categoria'}</td>
+                                                    <td>R$ {expense.amount.toFixed(2)}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="empty-state">
+                                <p>Nenhum lançamento este mês</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const Categories = () => {
+            const [categories, setCategories] = useState([]);
+            const [showModal, setShowModal] = useState(false);
+            const [editingCategory, setEditingCategory] = useState(null);
+            const [formData, setFormData] = useState({ name: '', type: 'despesa' });
+
+            useEffect(() => {
+                loadCategories();
+            }, []);
+
+            const loadCategories = () => {
+                const data = JSON.parse(localStorage.getItem('categories') || '[]');
+                setCategories(data);
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                let updatedCategories = [...categories];
+                
+                if (editingCategory) {
+                    updatedCategories = categories.map(cat => 
+                        cat.id === editingCategory.id ? {...cat, ...formData} : cat
+                    );
+                } else {
+                    const newCategory = {
+                        id: Date.now(),
+                        ...formData
+                    };
+                    updatedCategories.push(newCategory);
+                }
+                
+                localStorage.setItem('categories', JSON.stringify(updatedCategories));
+                loadCategories();
+                handleCloseModal();
+            };
+
+            const handleDelete = (id) => {
+                if (confirm('Tem certeza que deseja excluir esta categoria?')) {
+                    const updatedCategories = categories.filter(cat => cat.id !== id);
+                    localStorage.setItem('categories', JSON.stringify(updatedCategories));
+                    loadCategories();
+                }
+            };
+
+            const handleEdit = (category) => {
+                setEditingCategory(category);
+                setFormData({ name: category.name, type: category.type });
+                setShowModal(true);
+            };
+
+            const handleCloseModal = () => {
+                setShowModal(false);
+                setEditingCategory(null);
+                setFormData({ name: '', type: 'despesa' });
+            };
+
+            return (
+                <div>
+                    <h1 style={{color: '#333', marginBottom: '30px'}}>Categorias</h1>
+                    
+                    <button className="btn" onClick={() => setShowModal(true)} style={{marginBottom: '20px'}}>
+                        Nova Categoria
+                    </button>
+
+                    <div className="dashboard-card">
+                        <h3>Lista de Categorias</h3>
+                        {categories.length > 0 ? (
+                            <div className="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>Tipo</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {categories.map(category => (
+                                            <tr key={category.id}>
+                                                <td>{category.name}</td>
+                                                <td>
+                                                    <span className={`badge ${category.type === 'receita' ? 'badge-success' : 'badge-danger'}`}>
+                                                        {category.type}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div className="action-buttons">
+                                                        <button className="btn btn-secondary" onClick={() => handleEdit(category)}>
+                                                            Editar
+                                                        </button>
+                                                        <button className="btn btn-danger" onClick={() => handleDelete(category.id)}>
+                                                            Excluir
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="empty-state">
+                                <p>Nenhuma categoria cadastrada</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {showModal && (
+                        <div className="modal-overlay" onClick={handleCloseModal}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                <div className="modal-header">
+                                    <h3>{editingCategory ? 'Editar Categoria' : 'Nova Categoria'}</h3>
+                                    <button className="close-btn" onClick={handleCloseModal}>×</button>
+                                </div>
+                                <form onSubmit={handleSubmit}>
+                                    <div className="form-group">
+                                        <label>Nome da Categoria</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Tipo</label>
+                                        <select
+                                            value={formData.type}
+                                            onChange={(e) => setFormData({...formData, type: e.target.value})}
+                                        >
+                                            <option value="despesa">Despesa</option>
+                                            <option value="receita">Receita</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" className="btn">
+                                        {editingCategory ? 'Salvar' : 'Adicionar'}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const Expenses = () => {
+            const [expenses, setExpenses] = useState([]);
+            const [categories, setCategories] = useState([]);
+            const [showModal, setShowModal] = useState(false);
+            const [editingExpense, setEditingExpense] = useState(null);
+            const [formData, setFormData] = useState({
+                description: '',
+                amount: '',
+                categoryId: '',
+                date: '',
+                type: 'despesa'
+            });
+
+            useEffect(() => {
+                loadExpenses();
+                loadCategories();
+            }, []);
+
+            const loadExpenses = () => {
+                const data = JSON.parse(localStorage.getItem('expenses') || '[]');
+                setExpenses(data);
+            };
+
+            const loadCategories = () => {
+                const data = JSON.parse(localStorage.getItem('categories') || '[]');
+                setCategories(data);
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                let updatedExpenses = [...expenses];
+                
+                if (editingExpense) {
+                    updatedExpenses = expenses.map(exp => 
+                        exp.id === editingExpense.id 
+                            ? {...exp, ...formData, amount: parseFloat(formData.amount), categoryId: parseInt(formData.categoryId)} 
+                            : exp
+                    );
+                } else {
+                    const newExpense = {
+                        id: Date.now(),
+                        ...formData,
+                        amount: parseFloat(formData.amount),
+                        categoryId: parseInt(formData.categoryId)
+                    };
+                    updatedExpenses.push(newExpense);
+                }
+                
+                localStorage.setItem('expenses', JSON.stringify(updatedExpenses));
+                loadExpenses();
+                handleCloseModal();
+            };
+
+            const handleDelete = (id) => {
+                if (confirm('Tem certeza que deseja excluir este lançamento?')) {
+                    const updatedExpenses = expenses.filter(exp => exp.id !== id);
+                    localStorage.setItem('expenses', JSON.stringify(updatedExpenses));
+                    loadExpenses();
+                }
+            };
+
+            const handleEdit = (expense) => {
+                setEditingExpense(expense);
+                setFormData({
+                    description: expense.description,
+                    amount: expense.amount.toString(),
+                    categoryId: expense.categoryId.toString(),
+                    date: expense.date,
+                    type: expense.type
+                });
+                setShowModal(true);
+            };
+
+            const handleCloseModal = () => {
+                setShowModal(false);
+                setEditingExpense(null);
+                setFormData({
+                    description: '',
+                    amount: '',
+                    categoryId: '',
+                    date: '',
+                    type: 'despesa'
+                });
+            };
+
+            return (
+                <div>
+                    <h1 style={{color: '#333', marginBottom: '30px'}}>Lançamentos</h1>
+                    
+                    <button className="btn" onClick={() => setShowModal(true)} style={{marginBottom: '20px'}}>
+                        Novo Lançamento
+                    </button>
+
+                    <div className="dashboard-card">
+                        <h3>Lista de Lançamentos</h3>
+                        {expenses.length > 0 ? (
+                            <div className="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Descrição</th>
+                                            <th>Categoria</th>
+                                            <th>Tipo</th>
+                                            <th>Valor</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {expenses.map(expense => {
+                                            const category = categories.find(c => c.id === expense.categoryId);
+                                            return (
+                                                <tr key={expense.id}>
+                                                    <td>{new Date(expense.date).toLocaleDateString('pt-BR')}</td>
+                                                    <td>{expense.description}</td>
+                                                    <td>{category?.name || 'Sem categoria'}</td>
+                                                    <td>
+                                                        <span className={`badge ${expense.type === 'receita' ? 'badge-success' : 'badge-danger'}`}>
+                                                            {expense.type}
+                                                        </span>
+                                                    </td>
+                                                    <td>R$ {expense.amount.toFixed(2)}</td>
+                                                    <td>
+                                                        <div className="action-buttons">
+                                                            <button className="btn btn-secondary" onClick={() => handleEdit(expense)}>
+                                                                Editar
+                                                            </button>
+                                                            <button className="btn btn-danger" onClick={() => handleDelete(expense.id)}>
+                                                                Excluir
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="empty-state">
+                                <p>Nenhum lançamento cadastrado</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {showModal && (
+                        <div className="modal-overlay" onClick={handleCloseModal}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                <div className="modal-header">
+                                    <h3>{editingExpense ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
+                                    <button className="close-btn" onClick={handleCloseModal}>×</button>
+                                </div>
+                                <form onSubmit={handleSubmit}>
+                                    <div className="form-group">
+                                        <label>Descrição</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.description}
+                                            onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Valor</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            required
+                                            value={formData.amount}
+                                            onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Categoria</label>
+                                        <select
+                                            required
+                                            value={formData.categoryId}
+                                            onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
+                                        >
+                                            <option value="">Selecione...</option>
+                                            {categories.filter(c => c.type === formData.type).map(category => (
+                                                <option key={category.id} value={category.id}>
+                                                    {category.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Data</label>
+                                        <input
+                                            type="date"
+                                            required
+                                            value={formData.date}
+                                            onChange={(e) => setFormData({...formData, date: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Tipo</label>
+                                        <select
+                                            value={formData.type}
+                                            onChange={(e) => setFormData({...formData, type: e.target.value})}
+                                        >
+                                            <option value="despesa">Despesa</option>
+                                            <option value="receita">Receita</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" className="btn">
+                                        {editingExpense ? 'Salvar' : 'Adicionar'}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const FixedExpenses = () => {
+            const [fixedExpenses, setFixedExpenses] = useState([]);
+            const [categories, setCategories] = useState([]);
+            const [showModal, setShowModal] = useState(false);
+            const [editingExpense, setEditingExpense] = useState(null);
+            const [formData, setFormData] = useState({
+                description: '',
+                amount: '',
+                categoryId: '',
+                dayOfMonth: ''
+            });
+
+            useEffect(() => {
+                loadFixedExpenses();
+                loadCategories();
+            }, []);
+
+            const loadFixedExpenses = () => {
+                const data = JSON.parse(localStorage.getItem('fixedExpenses') || '[]');
+                setFixedExpenses(data);
+            };
+
+            const loadCategories = () => {
+                const data = JSON.parse(localStorage.getItem('categories') || '[]');
+                setCategories(data.filter(c => c.type === 'despesa'));
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                let updatedExpenses = [...fixedExpenses];
+                
+                if (editingExpense) {
+                    updatedExpenses = fixedExpenses.map(exp => 
+                        exp.id === editingExpense.id 
+                            ? {...exp, ...formData, amount: parseFloat(formData.amount), categoryId: parseInt(formData.categoryId), dayOfMonth: parseInt(formData.dayOfMonth)} 
+                            : exp
+                    );
+                } else {
+                    const newExpense = {
+                        id: Date.now(),
+                        ...formData,
+                        amount: parseFloat(formData.amount),
+                        categoryId: parseInt(formData.categoryId),
+                        dayOfMonth: parseInt(formData.dayOfMonth)
+                    };
+                    updatedExpenses.push(newExpense);
+                }
+                
+                localStorage.setItem('fixedExpenses', JSON.stringify(updatedExpenses));
+                loadFixedExpenses();
+                handleCloseModal();
+            };
+
+            const handleDelete = (id) => {
+                if (confirm('Tem certeza que deseja excluir esta despesa fixa?')) {
+                    const updatedExpenses = fixedExpenses.filter(exp => exp.id !== id);
+                    localStorage.setItem('fixedExpenses', JSON.stringify(updatedExpenses));
+                    loadFixedExpenses();
+                }
+            };
+
+            const handleEdit = (expense) => {
+                setEditingExpense(expense);
+                setFormData({
+                    description: expense.description,
+                    amount: expense.amount.toString(),
+                    categoryId: expense.categoryId.toString(),
+                    dayOfMonth: expense.dayOfMonth.toString()
+                });
+                setShowModal(true);
+            };
+
+            const handleCloseModal = () => {
+                setShowModal(false);
+                setEditingExpense(null);
+                setFormData({
+                    description: '',
+                    amount: '',
+                    categoryId: '',
+                    dayOfMonth: ''
+                });
+            };
+
+            return (
+                <div>
+                    <h1 style={{color: '#333', marginBottom: '30px'}}>Despesas Fixas</h1>
+                    
+                    <button className="btn" onClick={() => setShowModal(true)} style={{marginBottom: '20px'}}>
+                        Nova Despesa Fixa
+                    </button>
+
+                    <div className="dashboard-card">
+                        <h3>Lista de Despesas Fixas</h3>
+                        {fixedExpenses.length > 0 ? (
+                            <div className="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Descrição</th>
+                                            <th>Categoria</th>
+                                            <th>Valor</th>
+                                            <th>Dia do Mês</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {fixedExpenses.map(expense => {
+                                            const category = categories.find(c => c.id === expense.categoryId);
+                                            return (
+                                                <tr key={expense.id}>
+                                                    <td>{expense.description}</td>
+                                                    <td>{category?.name || 'Sem categoria'}</td>
+                                                    <td>R$ {expense.amount.toFixed(2)}</td>
+                                                    <td>Dia {expense.dayOfMonth}</td>
+                                                    <td>
+                                                        <div className="action-buttons">
+                                                            <button className="btn btn-secondary" onClick={() => handleEdit(expense)}>
+                                                                Editar
+                                                            </button>
+                                                            <button className="btn btn-danger" onClick={() => handleDelete(expense.id)}>
+                                                                Excluir
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="empty-state">
+                                <p>Nenhuma despesa fixa cadastrada</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {showModal && (
+                        <div className="modal-overlay" onClick={handleCloseModal}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                <div className="modal-header">
+                                    <h3>{editingExpense ? 'Editar Despesa Fixa' : 'Nova Despesa Fixa'}</h3>
+                                    <button className="close-btn" onClick={handleCloseModal}>×</button>
+                                </div>
+                                <form onSubmit={handleSubmit}>
+                                    <div className="form-group">
+                                        <label>Descrição</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.description}
+                                            onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Valor</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            required
+                                            value={formData.amount}
+                                            onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Categoria</label>
+                                        <select
+                                            required
+                                            value={formData.categoryId}
+                                            onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
+                                        >
+                                            <option value="">Selecione...</option>
+                                            {categories.map(category => (
+                                                <option key={category.id} value={category.id}>
+                                                    {category.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Dia do Mês (1-31)</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="31"
+                                            required
+                                            value={formData.dayOfMonth}
+                                            onChange={(e) => setFormData({...formData, dayOfMonth: e.target.value})}
+                                        />
+                                    </div>
+                                    <button type="submit" className="btn">
+                                        {editingExpense ? 'Salvar' : 'Adicionar'}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const Income = () => {
+            const [income, setIncome] = useState({
+                fixed: 0,
+                variable: []
+               
+            });
+            const [showVariableModal, setShowVariableModal] = useState(false);
+            const [editingVariable, setEditingVariable] = useState(null);
+            const [variableForm, setVariableForm] = useState({
+                description: '',
+                amount: '',
+                validUntil: ''
+            });
+
+            useEffect(() => {
+                loadIncome();
+            }, []);
+
+            const loadIncome = () => {
+                const data = JSON.parse(localStorage.getItem('income') || '{"fixed": 0, "variable": []}');
+                setIncome(data);
+            };
+
+            const saveIncome = (newIncome) => {
+                localStorage.setItem('income', JSON.stringify(newIncome));
+                loadIncome();
+            };
+
+            const handleFixedChange = (value) => {
+                const newIncome = { ...income, fixed: parseFloat(value) || 0 };
+                saveIncome(newIncome);
+            };
+
+
+
+            const handleVariableSubmit = (e) => {
+                e.preventDefault();
+                let updatedVariable = [...income.variable];
+                
+                if (editingVariable) {
+                    updatedVariable = income.variable.map(v => 
+                        v.id === editingVariable.id 
+                            ? {...v, ...variableForm, amount: parseFloat(variableForm.amount)} 
+                            : v
+                    );
+                } else {
+                    const newVariable = {
+                        id: Date.now(),
+                        ...variableForm,
+                        amount: parseFloat(variableForm.amount)
+                    };
+                    updatedVariable.push(newVariable);
+                }
+                
+                const newIncome = { ...income, variable: updatedVariable };
+                saveIncome(newIncome);
+                handleCloseVariableModal();
+            };
+
+            const handleDeleteVariable = (id) => {
+                if (confirm('Tem certeza que deseja excluir esta receita variável?')) {
+                    const updatedVariable = income.variable.filter(v => v.id !== id);
+                    const newIncome = { ...income, variable: updatedVariable };
+                    saveIncome(newIncome);
+                }
+            };
+
+            const handleEditVariable = (variable) => {
+                setEditingVariable(variable);
+                setVariableForm({
+                    description: variable.description,
+                    amount: variable.amount.toString(),
+                    validUntil: variable.validUntil
+                });
+                setShowVariableModal(true);
+            };
+
+            const handleCloseVariableModal = () => {
+                setShowVariableModal(false);
+                setEditingVariable(null);
+                setVariableForm({
+                    description: '',
+                    amount: '',
+                    validUntil: ''
+                });
+            };
+
+
+
+            return (
+                <div>
+                    <h1 style={{color: '#333', marginBottom: '30px'}}>Receitas</h1>
+                    
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <h4>Receita Total Líquida</h4>
+                            <div className="value">R$ {(income.fixed + income.variable.reduce((sum, v) => sum + v.amount, 0)).toFixed(2)}</div>
+                        </div>
+                    </div>
+
+                    <div className="dashboard-card">
+                        <h3>Receita Mensal Fixa</h3>
+                        <div className="form-group">
+                            <label>Valor Fixo Mensal</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={income.fixed}
+                                onChange={(e) => handleFixedChange(e.target.value)}
+                                placeholder="0.00"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="dashboard-card">
+                        <h3>Receitas Variáveis</h3>
+                        <button className="btn" onClick={() => setShowVariableModal(true)} style={{marginBottom: '20px'}}>
+                            Adicionar Receita Variável
+                        </button>
+                        
+                        {income.variable.length > 0 ? (
+                            <div className="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Descrição</th>
+                                            <th>Valor</th>
+                                            <th>Válido Até</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {income.variable.map(variable => (
+                                            <tr key={variable.id}>
+                                                <td>{variable.description}</td>
+                                                <td>R$ {variable.amount.toFixed(2)}</td>
+                                                <td>{new Date(variable.validUntil).toLocaleDateString('pt-BR')}</td>
+                                                <td>
+                                                    <div className="action-buttons">
+                                                        <button className="btn btn-secondary" onClick={() => handleEditVariable(variable)}>
+                                                            Editar
+                                                        </button>
+                                                        <button className="btn btn-danger" onClick={() => handleDeleteVariable(variable.id)}>
+                                                            Excluir
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="empty-state">
+                                <p>Nenhuma receita variável cadastrada</p>
+                            </div>
+                        )}
+                    </div>
+
+
+                    {showVariableModal && (
+                        <div className="modal-overlay" onClick={handleCloseVariableModal}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                <div className="modal-header">
+                                    <h3>{editingVariable ? 'Editar Receita Variável' : 'Nova Receita Variável'}</h3>
+                                    <button className="close-btn" onClick={handleCloseVariableModal}>×</button>
+                                </div>
+                                <form onSubmit={handleVariableSubmit}>
+                                    <div className="form-group">
+                                        <label>Descrição</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={variableForm.description}
+                                            onChange={(e) => setVariableForm({...variableForm, description: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Valor</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            required
+                                            value={variableForm.amount}
+                                            onChange={(e) => setVariableForm({...variableForm, amount: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Válido Até</label>
+                                        <input
+                                            type="date"
+                                            required
+                                            value={variableForm.validUntil}
+                                            onChange={(e) => setVariableForm({...variableForm, validUntil: e.target.value})}
+                                        />
+                                    </div>
+                                    <button type="submit" className="btn">
+                                        {editingVariable ? 'Salvar' : 'Adicionar'}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const Reports = () => {
+            const [reportType, setReportType] = useState('mensal');
+            const [categoryFilter, setCategoryFilter] = useState('all');
+            const [categories, setCategories] = useState([]);
+            const [reportData, setReportData] = useState(null);
+
+            useEffect(() => {
+                const cats = JSON.parse(localStorage.getItem('categories') || '[]');
+                setCategories(cats);
+            }, []);
+
+            const generateReport = () => {
+                const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+                const income = JSON.parse(localStorage.getItem('income') || '{}');
+                
+                const now = new Date();
+                let filteredExpenses = expenses;
+                
+                if (reportType === 'mensal') {
+                    filteredExpenses = expenses.filter(e => {
+                        const date = new Date(e.date);
+                        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+                    });
+                } else {
+                    filteredExpenses = expenses.filter(e => {
+                        const date = new Date(e.date);
+                        return date.getFullYear() === now.getFullYear();
+                    });
+                }
+
+                if (categoryFilter !== 'all') {
+                    filteredExpenses = filteredExpenses.filter(e => e.categoryId === parseInt(categoryFilter));
+                }
+
+                const totalExpenses = filteredExpenses.reduce((sum, e) => e.type === 'despesa' ? sum + e.amount : sum, 0);
+                const totalIncomeAmount = (income.fixed || 0) + 
+                    (income.variable?.reduce((sum, v) => sum + v.amount, 0) || 0); 
+                    
+
+                setReportData({
+                    type: reportType,
+                    period: reportType === 'mensal' ? `${now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}` : now.getFullYear(),
+                    totalIncome: totalIncomeAmount,
+                    totalExpenses,
+                    balance: totalIncomeAmount - totalExpenses,
+                    expenses: filteredExpenses,
+                    categories: categories
+                });
+            };
+
+            const downloadPDF = () => {
+                if (!reportData) return;
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(20);
+                doc.text('Relatório Financeiro', 20, 20);
+                
+                doc.setFontSize(12);
+                doc.text(`Período: ${reportData.period}`, 20, 35);
+                doc.text(`Receita Total: R$ ${reportData.totalIncome.toFixed(2)}`, 20, 45);
+                doc.text(`Despesas Total: R$ ${reportData.totalExpenses.toFixed(2)}`, 20, 55);
+                doc.text(`Saldo: R$ ${reportData.balance.toFixed(2)}`, 20, 65);
+                
+                doc.text('Detalhamento:', 20, 80);
+                let y = 90;
+                
+                reportData.expenses.forEach(expense => {
+                    const category = reportData.categories.find(c => c.id === expense.categoryId);
+                    doc.text(`${new Date(expense.date).toLocaleDateString('pt-BR')} - ${expense.description} (${category?.name || 'Sem categoria'}): R$ ${expense.amount.toFixed(2)}`, 20, y);
+                    y += 10;
+                    if (y > 280) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                });
+                
+                doc.save(`relatorio-${reportData.type}-${Date.now()}.pdf`);
+                alert('PDF baixado com sucesso!');
+            };
+
+            const sendEmail = () => {
+                alert('Funcionalidade de envio por email será implementada com o backend');
+            };
+
+            return (
+                <div>
+                    <h1 style={{color: '#333', marginBottom: '30px'}}>Relatórios</h1>
+                    
+                    <div className="dashboard-card">
+                        <h3>Configurações do Relatório</h3>
+                        <div className="filter-container">
+                            <select value={reportType} onChange={(e) => setReportType(e.target.value)}>
+                                <option value="mensal">Mensal</option>
+                                <option value="anual">Anual</option>
+                            </select>
+                            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                                <option value="all">Todas as Categorias</option>
+                                {categories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                            </select>
+                            <button className="btn" onClick={generateReport}>
+                                Gerar Relatório
+                            </button>
+                        </div>
+                    </div>
+
+                    {reportData && (
+                        <div className="dashboard-card">
+                            <h3>Relatório {reportData.type === 'mensal' ? 'Mensal' : 'Anual'} - {reportData.period}</h3>
+                            
+                            <div className="stats-grid" style={{marginBottom: '30px'}}>
+                                <div className="stat-card">
+                                    <h4>Receita Total</h4>
+                                    <div className="value">R$ {reportData.totalIncome.toFixed(2)}</div>
+                                </div>
+                                <div className="stat-card">
+                                    <h4>Despesas Total</h4>
+                                    <div className="value">R$ {reportData.totalExpenses.toFixed(2)}</div>
+                                </div>
+                                <div className="stat-card">
+                                    <h4>Saldo</h4>
+                                    <div className="value">R$ {reportData.balance.toFixed(2)}</div>
+                                </div>
+                            </div>
+
+                            <div className="action-buttons" style={{marginBottom: '20px'}}>
+                                <button className="btn btn-success" onClick={downloadPDF}>
+                                    Baixar PDF
+                                </button>
+                                <button className="btn" onClick={sendEmail}>
+                                    Enviar por Email
+                                </button>
+                            </div>
+
+                            <div className="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Descrição</th>
+                                            <th>Categoria</th>
+                                            <th>Tipo</th>
+                                            <th>Valor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {reportData.expenses.map(expense => {
+                                            const category = reportData.categories.find(c => c.id === expense.categoryId);
+                                            return (
+                                                <tr key={expense.id}>
+                                                    <td>{new Date(expense.date).toLocaleDateString('pt-BR')}</td>
+                                                    <td>{expense.description}</td>
+                                                    <td>{category?.name || 'Sem categoria'}</td>
+                                                    <td>
+                                                        <span className={`badge ${expense.type === 'receita' ? 'badge-success' : 'badge-danger'}`}>
+                                                            {expense.type}
+                                                        </span>
+                                                    </td>
+                                                    <td>R$ {expense.amount.toFixed(2)}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const Analysis = () => {
+            const [filter, setFilter] = useState('entradas');
+            const [period, setPeriod] = useState('mensal');
+            const [chartData, setChartData] = useState([]);
+
+            useEffect(() => {
+                generateChartData();
+            }, [filter, period]);
+
+            const generateChartData = () => {
+                const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+                const income = JSON.parse(localStorage.getItem('income') || '{}');
+                const categories = JSON.parse(localStorage.getItem('categories') || '[]');
+                
+                const now = new Date();
+                let data = [];
+
+                if (filter === 'entradas') {
+                    if (period === 'mensal') {
+                        data = [
+                            { name: 'Receita Fixa', value: income.fixed || 0 },
+                            { name: 'Receita Variável', value: income.variable?.reduce((sum, v) => sum + v.amount, 0) || 0 },
+                
+                        ];
+                    } else {
+                        const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                        data = months.map((month, index) => ({
+                            name: month,
+                            value: (income.fixed || 0)
+                        }));
+                    }
+                } else if (filter === 'saidas') {
+                    const filteredExpenses = expenses.filter(e => e.type === 'despesa');
+                    
+                    if (period === 'mensal') {
+                        const monthlyExpenses = filteredExpenses.filter(e => {
+                            const date = new Date(e.date);
+                            return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+                        });
+                        
+                        const expensesByCategory = {};
+                        monthlyExpenses.forEach(expense => {
+                            const category = categories.find(c => c.id === expense.categoryId);
+                            const categoryName = category?.name || 'Sem categoria';
+                            expensesByCategory[categoryName] = (expensesByCategory[categoryName] || 0) + expense.amount;
+                        });
+                        
+                        data = Object.entries(expensesByCategory).map(([name, value]) => ({
+                            name,
+                            value
+                        }));
+                    } else {
+                        const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                        data = months.map(month => {
+                            const monthIndex = months.indexOf(month);
+                            const monthlyExpenses = filteredExpenses.filter(e => {
+                                const date = new Date(e.date);
+                                return date.getMonth() === monthIndex && date.getFullYear() === now.getFullYear();
+                            });
+                            return {
+                                name: month,
+                                value: monthlyExpenses.reduce((sum, e) => sum + e.amount, 0)
+                            };
+                        });
+                    }
+                }
+
+                setChartData(data);
+            };
+
+            const maxValue = Math.max(...chartData.map(d => d.value), 1);
+
+            return (
+                <div>
+                    <h1 style={{color: '#333', marginBottom: '30px'}}>Análises</h1>
+                    
+                    <div className="dashboard-card">
+                        <h3>Filtros</h3>
+                        <div className="filter-container">
+                            <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+                                <option value="entradas">Entradas</option>
+                                <option value="saidas">Saídas</option>
+                            </select>
+                            <select value={period} onChange={(e) => setPeriod(e.target.value)}>
+                                <option value="mensal">Mensal</option>
+                                <option value="anual">Anual</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="dashboard-card">
+                        <h3>Visualização - {filter === 'entradas' ? 'Entradas' : 'Saídas'} ({period === 'mensal' ? 'Mensal' : 'Anual'})</h3>
+                        <div className="chart-container">
+                            <div className="simple-chart">
+                                <div className="bar-chart">
+                                    {chartData.map((item, index) => (
+                                        <div 
+                                            key={index}
+                                            className="bar" 
+                                            style={{
+                                                height: `${(item.value / maxValue) * 100}%`,
+                                                minHeight: '20px'
+                                            }}
+                                        >
+                                            <div className="bar-value">
+                                                R$ {item.value.toFixed(0)}
+                                            </div>
+                                            <div className="bar-label">
+                                                {item.name}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Settings = ({ currentUser, setCurrentUser }) => {
+            const [formData, setFormData] = useState({
+                name: currentUser?.name || '',
+                email: currentUser?.email || '',
+                password: '',
+                newPassword: ''
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const userIndex = users.findIndex(u => u.id === currentUser.id);
+                
+                if (userIndex !== -1) {
+                    users[userIndex] = {
+                        ...users[userIndex],
+                        name: formData.name,
+                        email: formData.email,
+                        password: formData.newPassword || users[userIndex].password,
+                        avatar: formData.name.charAt(0).toUpperCase()
+                    };
+                    
+                    localStorage.setItem('users', JSON.stringify(users));
+                    localStorage.setItem('currentUser', JSON.stringify(users[userIndex]));
+                    setCurrentUser(users[userIndex]);
+                    
+                    alert('Configurações salvas com sucesso!');
+                } else {
+                    // Se o usuário não existir, criar um novo
+                    const updatedUser = {
+                        ...currentUser,
+                        name: formData.name,
+                        email: formData.email,
+                        password: formData.newPassword || currentUser.password,
+                        avatar: formData.name.charAt(0).toUpperCase()
+                    };
+                    
+                    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                    setCurrentUser(updatedUser);
+                    alert('Configurações salvas com sucesso!');
+                }
+            };
+
+            return (
+                <div>
+                    <h1 style={{color: '#333', marginBottom: '30px'}}>Configurações</h1>
+                    
+                    <div className="dashboard-card">
+                        <h3>Perfil do Usuário</h3>
+                        <div className="profile-section">
+                            <div className="profile-avatar">
+                                {currentUser?.avatar || currentUser?.name?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                            <div style={{flex: 1}}>
+                                <h2 style={{color: '#333', marginBottom: '10px'}}>{currentUser?.name || 'Usuário'}</h2>
+                                <p style={{color: '#666'}}>{currentUser?.email || 'email@exemplo.com'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="dashboard-card">
+                        <h3>Editar Informações</h3>
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Nome</label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Email</label>
+                                <input
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Nova Senha (deixe em branco para manter a atual)</label>
+                                <input
+                                    type="password"
+                                    value={formData.newPassword}
+                                    onChange={(e) => setFormData({...formData, newPassword: e.target.value})}
+                                    placeholder="Nova senha"
+                                />
+                            </div>
+                            <button type="submit" className="btn">
+                                Salvar Alterações
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
