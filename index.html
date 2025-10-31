@@ -12,547 +12,155 @@
 </head>
 <body>
 
-    <style>
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    min-height: 100vh;
-}
-
-.app-container {
-    display: flex;
-    min-height: 100vh;
-}
-
-.sidebar {
-    width: 250px;
-    background: linear-gradient(180deg, #52dbf1 0%, #3fa9c4 100%);
-    color: white;
-    padding: 20px 0;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-    position: fixed;
-    height: 100vh;
-    overflow-y: auto;
-    transition: transform 0.3s ease;
-}
-
-.sidebar-header {
-    padding: 0 20px 30px;
-    border-bottom: 1px solid rgba(255,255,255,0.2);
-    margin-bottom: 20px;
-}
-
-.sidebar h2 {
-    font-size: 24px;
-    font-weight: 600;
-}
-
-.menu-item {
-    padding: 15px 20px;
-    cursor: pointer;
-    transition: all 0.3s;
-    border: none;
-    background: none;
-    color: white;
-    width: 100%;
-    text-align: left;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.menu-item:hover {
-    background: rgba(255,255,255,0.1);
-    padding-left: 30px;
-}
-
-.menu-item.active {
-    background: rgba(255,255,255,0.2);
-    border-left: 4px solid white;
-}
-
-.main-content {
-    flex: 1;
-    margin-left: 250px;
-    padding: 30px;
-    min-height: 100vh;
-}
-
-.login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #52dbf1 0%, #3fa9c4 100%);
-}
-
-.login-box {
-    background: white;
-    padding: 40px;
-    border-radius: 15px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    width: 400px;
-    max-width: 90%;
-}
-
-.login-box h2 {
-    color: #333;
-    margin-bottom: 30px;
-    text-align: center;
-    font-size: 28px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: #555;
-    font-weight: 500;
-}
-
-.form-group input, .form-group select, .form-group textarea {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
-    transition: border-color 0.3s;
-}
-
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-    outline: none;
-    border-color: #52dbf1;
-    box-shadow: 0 0 0 3px rgba(82, 219, 241, 0.1);
-}
-
-.btn {
-    padding: 12px 24px;
-    background: #52dbf1;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.btn:hover {
-    background: #3fa9c4;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(82, 219, 241, 0.3);
-}
-
-.btn-secondary {
-    background: #6c757d;
-}
-
-.btn-secondary:hover {
-    background: #5a6268;
-}
-
-.btn-danger {
-    background: #dc3545;
-}
-
-.btn-danger:hover {
-    background: #c82333;
-}
-
-.btn-success {
-    background: #28a745;
-}
-
-.btn-success:hover {
-    background: #218838;
-}
-
-.dashboard-card {
-    background: white;
-    border-radius: 12px;
-    padding: 25px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    margin-bottom: 20px;
-}
-
-.dashboard-card h3 {
-    color: #333;
-    margin-bottom: 20px;
-    font-size: 20px;
-    border-bottom: 2px solid #52dbf1;
-    padding-bottom: 10px;
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.stat-card {
-    background: linear-gradient(135deg, #52dbf1 0%, #3fa9c4 100%);
-    color: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(82, 219, 241, 0.3);
-}
-
-.stat-card h4 {
-    font-size: 14px;
-    opacity: 0.9;
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.stat-card .value {
-    font-size: 32px;
-    font-weight: bold;
-}
-
-.table-container {
-    overflow-x: auto;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th, td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-}
-
-th {
-    background: #f8f9fa;
-    font-weight: 600;
-    color: #555;
-}
-
-tr:hover {
-    background: #f8f9fa;
-}
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.modal {
-    background: white;
-    padding: 30px;
-    border-radius: 15px;
-    width: 500px;
-    max-width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-}
-
-.modal-header h3 {
-    color: #333;
-    font-size: 24px;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #999;
-    transition: color 0.3s;
-}
-
-.close-btn:hover {
-    color: #333;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 10px;
-}
-
-.filter-container {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-}
-
-.filter-container select {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-}
-
-.chart-container {
-    margin: 20px 0;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    min-height: 300px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.simple-chart {
-    width: 100%;
-    max-width: 600px;
-}
-
-.bar-chart {
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-    height: 250px;
-    padding: 20px;
-}
-
-.bar {
-    flex: 1;
-    background: #52dbf1;
-    border-radius: 4px 4px 0 0;
-    position: relative;
-    min-height: 20px;
-    transition: all 0.3s;
-}
-
-.bar:hover {
-    background: #3fa9c4;
-}
-
-.bar-label {
-    position: absolute;
-    bottom: -25px;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 12px;
-    color: #666;
-}
-
-.bar-value {
-    position: absolute;
-    top: -25px;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 12px;
-    color: #333;
-    font-weight: bold;
-}
-
-.profile-section {
-    display: flex;
-    align-items: center;
-    gap: 30px;
-    margin-bottom: 30px;
-}
-
-.profile-avatar {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #52dbf1 0%, #3fa9c4 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 36px;
-    font-weight: bold;
-}
-
-.hamburger {
-    display: none;
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1001;
-    background: #52dbf1;
-    border: none;
-    padding: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.hamburger span {
-    display: block;
-    width: 25px;
-    height: 3px;
-    background: white;
-    margin: 5px 0;
-    transition: 0.3s;
-}
-
-@media (max-width: 768px) {
-    .sidebar {
-        transform: translateX(-100%);
-    }
-
-    .sidebar.active {
-        transform: translateX(0);
-    }
-
-    .main-content {
-        margin-left: 0;
-        padding: 20px;
-        padding-top: 70px;
-    }
-
-    .hamburger {
-        display: block;
-    }
-
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .filter-container {
-        flex-direction: column;
-    }
-
-    .filter-container select {
-        width: 100%;
-    }
-
-    .modal {
-        width: 95%;
-        padding: 20px;
-    }
-}
-
-.empty-state {
-    text-align: center;
-    padding: 40px;
-    color: #999;
-}
-
-.badge {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.badge-success {
-    background: #d4edda;
-    color: #155724;
-}
-
-.badge-danger {
-    background: #f8d7da;
-    color: #721c24;
-}
-
-.badge-info {
-    background: #d1ecf1;
-    color: #0c5460;
-}
-
-.loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 200px;
-    color: #52dbf1;
-}
-
-.spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #52dbf1;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-    </style>
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // Inicializar dados fictícios no localStorage
-        const initializeMockData = () => {
-            if (!localStorage.getItem('categories')) {
-                const mockCategories = [
-                    { id: 1, name: 'Alimentação', type: 'despesa' },
-                    { id: 2, name: 'Transporte', type: 'despesa' },
-                    { id: 3, name: 'Moradia', type: 'despesa' },
-                    { id: 4, name: 'Salário', type: 'receita' },
-                    { id: 5, name: 'Freelance', type: 'receita' }
-                ];
-                localStorage.setItem('categories', JSON.stringify(mockCategories));
+        // API Base URL
+        const API_BASE = 'http://localhost:8000/api';
+
+        // API Helper Functions
+        const apiRequest = async (endpoint, options = {}) => {
+            const token = localStorage.getItem('token');
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
             }
 
-            if (!localStorage.getItem('expenses')) {
-                const mockExpenses = [
-                    { id: 1, description: 'Supermercado', amount: 450.00, categoryId: 1, date: '2025-10-15', type: 'despesa' },
-                    { id: 2, description: 'Uber', amount: 35.50, categoryId: 2, date: '2025-10-20', type: 'despesa' },
-                    { id: 3, description: 'Aluguel', amount: 1500.00, categoryId: 3, date: '2025-10-05', type: 'despesa' }
-                ];
-                localStorage.setItem('expenses', JSON.stringify(mockExpenses));
+            const response = await fetch(`${API_BASE}${endpoint}`, {
+                ...options,
+                headers
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('currentUser');
+                    window.location.reload();
+                }
+                throw new Error(`API Error: ${response.status}`);
             }
 
-            if (!localStorage.getItem('fixedExpenses')) {
-                const mockFixedExpenses = [
-                    { id: 1, description: 'Aluguel', amount: 1500.00, categoryId: 3, dayOfMonth: 5 },
-                    { id: 2, description: 'Internet', amount: 100.00, categoryId: 3, dayOfMonth: 10 },
-                    { id: 3, description: 'Academia', amount: 90.00, categoryId: 3, dayOfMonth: 1 }
-                ];
-                localStorage.setItem('fixedExpenses', JSON.stringify(mockFixedExpenses));
-            }
+            return response.json();
+        };
 
-            if (!localStorage.getItem('income')) {
-                const mockIncome = {
-                    fixed: 5000.00,
-                    variable: [
-                        { id: 1, description: 'Projeto Freelance', amount: 1500.00, validUntil: '2025-12-31' }
-                    ],
-                    
-                };
-                localStorage.setItem('income', JSON.stringify(mockIncome));
+        // Auth API
+        const authAPI = {
+            login: (email, password) => apiRequest('/auth/login/', {
+                method: 'POST',
+                body: JSON.stringify({ email, password })
+            }),
+            register: (userData) => apiRequest('/auth/register/', {
+                method: 'POST',
+                body: JSON.stringify(userData)
+            }),
+            getProfile: () => apiRequest('/auth/profile/'),
+            updateProfile: (userData) => apiRequest('/auth/profile/', {
+                method: 'PUT',
+                body: JSON.stringify(userData)
+            })
+        };
+
+        // Categories API
+        const categoriesAPI = {
+            list: () => apiRequest('/categories/'),
+            create: (category) => apiRequest('/categories/', {
+                method: 'POST',
+                body: JSON.stringify(category)
+            }),
+            update: (id, category) => apiRequest(`/categories/${id}/`, {
+                method: 'PUT',
+                body: JSON.stringify(category)
+            }),
+            delete: (id) => apiRequest(`/categories/${id}/`, {
+                method: 'DELETE'
+            })
+        };
+
+        // Expenses API
+        const expensesAPI = {
+            list: (params = {}) => {
+                const query = new URLSearchParams(params).toString();
+                return apiRequest(`/expenses/?${query}`);
+            },
+            create: (expense) => apiRequest('/expenses/', {
+                method: 'POST',
+                body: JSON.stringify(expense)
+            }),
+            update: (id, expense) => apiRequest(`/expenses/${id}/`, {
+                method: 'PUT',
+                body: JSON.stringify(expense)
+            }),
+            delete: (id) => apiRequest(`/expenses/${id}/`, {
+                method: 'DELETE'
+            })
+        };
+
+        // Fixed Expenses API
+        const fixedExpensesAPI = {
+            list: () => apiRequest('/fixed-expenses/'),
+            create: (expense) => apiRequest('/fixed-expenses/', {
+                method: 'POST',
+                body: JSON.stringify(expense)
+            }),
+            update: (id, expense) => apiRequest(`/fixed-expenses/${id}/`, {
+                method: 'PUT',
+                body: JSON.stringify(expense)
+            }),
+            delete: (id) => apiRequest(`/fixed-expenses/${id}/`, {
+                method: 'DELETE'
+            })
+        };
+
+        // Income API
+        const incomeAPI = {
+            get: () => apiRequest('/income/'),
+            update: (income) => apiRequest('/income/', {
+                method: 'PUT',
+                body: JSON.stringify(income)
+            }),
+            listVariable: () => apiRequest('/income/variable/'),
+            createVariable: (income) => apiRequest('/income/variable/', {
+                method: 'POST',
+                body: JSON.stringify(income)
+            }),
+            updateVariable: (id, income) => apiRequest(`/income/variable/${id}/`, {
+                method: 'PUT',
+                body: JSON.stringify(income)
+            }),
+            deleteVariable: (id) => apiRequest(`/income/variable/${id}/`, {
+                method: 'DELETE'
+            })
+        };
+
+        // Dashboard API
+        const dashboardAPI = {
+            stats: () => apiRequest('/dashboard/stats/'),
+            recentTransactions: (limit = 10) => apiRequest(`/dashboard/recent-transactions/?limit=${limit}`)
+        };
+
+        // Reports API
+        const reportsAPI = {
+            generate: (params) => {
+                const query = new URLSearchParams(params).toString();
+                return apiRequest(`/reports/generate/?${query}`);
             }
         };
 
-        initializeMockData();
+        // Analytics API
+        const analyticsAPI = {
+            summary: (month, year) => apiRequest(`/analytics/summary/?month=${month}&year=${year}`),
+            chartData: (filter, period, month, year) => {
+                const params = new URLSearchParams({ filter, period, year });
+                if (month) params.append('month', month);
+                return apiRequest(`/analytics/chart-data/?${params}`);
+            }
+        };
 
         const App = () => {
             const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -618,37 +226,30 @@ tr:hover {
                 email: '',
                 password: ''
             });
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState('');
 
-            const handleSubmit = (e) => {
+            const handleSubmit = async (e) => {
                 e.preventDefault();
-                
-                if (isRegister) {
-                    const users = JSON.parse(localStorage.getItem('users') || '[]');
-                    const newUser = {
-                        id: Date.now(),
-                        ...formData,
-                        avatar: formData.name.charAt(0).toUpperCase()
-                    };
-                    users.push(newUser);
-                    localStorage.setItem('users', JSON.stringify(users));
-                    onLogin(newUser);
-                } else {
-                    const users = JSON.parse(localStorage.getItem('users') || '[]');
-                    const user = users.find(u => u.email === formData.email && u.password === formData.password);
-                    
-                    if (user) {
-                        onLogin(user);
+                setLoading(true);
+                setError('');
+
+                try {
+                    if (isRegister) {
+                        const response = await authAPI.register(formData);
+                        const loginResponse = await authAPI.login(formData.email, formData.password);
+                        localStorage.setItem('token', loginResponse.access_token);
+                        onLogin({ ...response, token: loginResponse.access_token });
                     } else {
-                        // Para teste, criar um usuário padrão
-                        const defaultUser = {
-                            id: 1,
-                            name: 'Usuário Teste',
-                            email: formData.email || 'teste@teste.com',
-                            password: formData.password || '123456',
-                            avatar: 'U'
-                        };
-                        onLogin(defaultUser);
+                        const response = await authAPI.login(formData.email, formData.password);
+                        localStorage.setItem('token', response.access_token);
+                        const profile = await authAPI.getProfile();
+                        onLogin({ ...profile, token: response.access_token });
                     }
+                } catch (err) {
+                    setError('Erro no login/cadastro. Verifique suas credenciais.');
+                } finally {
+                    setLoading(false);
                 }
             };
 
@@ -686,11 +287,12 @@ tr:hover {
                                     placeholder="Digite qualquer senha para teste"
                                 />
                             </div>
-                            <button type="submit" className="btn" style={{width: '100%', marginBottom: '15px'}}>
-                                {isRegister ? 'Cadastrar' : 'Entrar'}
+                            {error && <div style={{color: 'red', marginBottom: '10px'}}>{error}</div>}
+                            <button type="submit" className="btn" style={{width: '100%', marginBottom: '15px'}} disabled={loading}>
+                                {loading ? 'Carregando...' : (isRegister ? 'Cadastrar' : 'Entrar')}
                             </button>
                         </form>
-                        <button 
+                        <button
                             onClick={() => setIsRegister(!isRegister)}
                             style={{background: 'none', border: 'none', color: '#52dbf1', cursor: 'pointer', width: '100%', textAlign: 'center'}}
                         >
@@ -759,91 +361,99 @@ tr:hover {
 
         const Dashboard = () => {
             const [stats, setStats] = useState({
-                totalIncome: 0,
-                totalExpenses: 0,
-                balance: 0,
-                monthExpenses: []
+                total_balance: 0,
+                monthly_income: 0,
+                monthly_expenses: 0,
+                active_categories: 0,
+                recentTransactions: []
             });
+            const [loading, setLoading] = useState(true);
 
             useEffect(() => {
-                const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
-                const income = JSON.parse(localStorage.getItem('income') || '{}');
-                
-                const currentMonth = new Date().getMonth();
-                const currentYear = new Date().getFullYear();
-                
-                const monthExpenses = expenses.filter(e => {
-                    const date = new Date(e.date);
-                    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-                });
-
-                const totalExpenses = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
-                const totalIncome = (income.fixed || 0) + 
-                    (income.variable?.reduce((sum, v) => sum + v.amount, 0) || 0);
-            
-
-                setStats({
-                    totalIncome,
-                    totalExpenses,
-                    balance: totalIncome - totalExpenses,
-                    monthExpenses
-                });
+                loadDashboardData();
             }, []);
+
+            const loadDashboardData = async () => {
+                try {
+                    const [statsData, transactions] = await Promise.all([
+                        dashboardAPI.stats(),
+                        dashboardAPI.recentTransactions()
+                    ]);
+                    setStats({
+                        ...statsData,
+                        recentTransactions: transactions
+                    });
+                } catch (error) {
+                    console.error('Erro ao carregar dados do dashboard:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
 
             return (
                 <div>
                     <h1 style={{color: '#333', marginBottom: '30px'}}>Dashboard</h1>
                     
-                    <div className="stats-grid">
-                        <div className="stat-card">
-                            <h4>Receita Total</h4>
-                            <div className="value">R$ {stats.totalIncome.toFixed(2)}</div>
+                    {loading ? (
+                        <div>Carregando...</div>
+                    ) : (
+                        <div className="stats-grid">
+                            <div className="stat-card">
+                                <h4>Saldo Total</h4>
+                                <div className="value">R$ {stats.total_balance.toFixed(2)}</div>
+                            </div>
+                            <div className="stat-card">
+                                <h4>Receita Mensal</h4>
+                                <div className="value">R$ {stats.monthly_income.toFixed(2)}</div>
+                            </div>
+                            <div className="stat-card">
+                                <h4>Despesas Mensal</h4>
+                                <div className="value">R$ {stats.monthly_expenses.toFixed(2)}</div>
+                            </div>
+                            <div className="stat-card">
+                                <h4>Categorias Ativas</h4>
+                                <div className="value">{stats.active_categories}</div>
+                            </div>
                         </div>
-                        <div className="stat-card">
-                            <h4>Despesas Total</h4>
-                            <div className="value">R$ {stats.totalExpenses.toFixed(2)}</div>
-                        </div>
-                        <div className="stat-card">
-                            <h4>Saldo</h4>
-                            <div className="value">R$ {stats.balance.toFixed(2)}</div>
-                        </div>
-                    </div>
+                    )}
 
-                    <div className="dashboard-card">
-                        <h3>Lançamentos do Mês</h3>
-                        {stats.monthExpenses.length > 0 ? (
-                            <div className="table-container">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Data</th>
-                                            <th>Descrição</th>
-                                            <th>Categoria</th>
-                                            <th>Valor</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {stats.monthExpenses.map(expense => {
-                                            const categories = JSON.parse(localStorage.getItem('categories') || '[]');
-                                            const category = categories.find(c => c.id === expense.categoryId);
-                                            return (
+                    {!loading && (
+                        <div className="dashboard-card">
+                            <h3>Transações Recentes</h3>
+                            {stats.recentTransactions.length > 0 ? (
+                                <div className="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Data</th>
+                                                <th>Descrição</th>
+                                                <th>Tipo</th>
+                                                <th>Valor</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {stats.recentTransactions.map(expense => (
                                                 <tr key={expense.id}>
                                                     <td>{new Date(expense.date).toLocaleDateString('pt-BR')}</td>
                                                     <td>{expense.description}</td>
-                                                    <td>{category?.name || 'Sem categoria'}</td>
-                                                    <td>R$ {expense.amount.toFixed(2)}</td>
+                                                    <td>
+                                                        <span className={`badge ${expense.type === 'RECEITA' ? 'badge-success' : 'badge-danger'}`}>
+                                                            {expense.type}
+                                                        </span>
+                                                    </td>
+                                                    <td>R$ {parseFloat(expense.amount).toFixed(2)}</td>
                                                 </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="empty-state">
-                                <p>Nenhum lançamento este mês</p>
-                            </div>
-                        )}
-                    </div>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="empty-state">
+                                    <p>Nenhuma transação recente</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             );
         };
@@ -853,42 +463,48 @@ tr:hover {
             const [showModal, setShowModal] = useState(false);
             const [editingCategory, setEditingCategory] = useState(null);
             const [formData, setFormData] = useState({ name: '', type: 'despesa' });
+            const [loading, setLoading] = useState(true);
 
             useEffect(() => {
                 loadCategories();
             }, []);
 
-            const loadCategories = () => {
-                const data = JSON.parse(localStorage.getItem('categories') || '[]');
-                setCategories(data);
-            };
-
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                let updatedCategories = [...categories];
-                
-                if (editingCategory) {
-                    updatedCategories = categories.map(cat => 
-                        cat.id === editingCategory.id ? {...cat, ...formData} : cat
-                    );
-                } else {
-                    const newCategory = {
-                        id: Date.now(),
-                        ...formData
-                    };
-                    updatedCategories.push(newCategory);
+            const loadCategories = async () => {
+                try {
+                    const data = await categoriesAPI.list();
+                    setCategories(data);
+                } catch (error) {
+                    console.error('Erro ao carregar categorias:', error);
+                } finally {
+                    setLoading(false);
                 }
-                
-                localStorage.setItem('categories', JSON.stringify(updatedCategories));
-                loadCategories();
-                handleCloseModal();
             };
 
-            const handleDelete = (id) => {
-                if (confirm('Tem certeza que deseja excluir esta categoria?')) {
-                    const updatedCategories = categories.filter(cat => cat.id !== id);
-                    localStorage.setItem('categories', JSON.stringify(updatedCategories));
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                try {
+                    if (editingCategory) {
+                        await categoriesAPI.update(editingCategory.id, formData);
+                    } else {
+                        await categoriesAPI.create(formData);
+                    }
                     loadCategories();
+                    handleCloseModal();
+                } catch (error) {
+                    console.error('Erro ao salvar categoria:', error);
+                    alert('Erro ao salvar categoria');
+                }
+            };
+
+            const handleDelete = async (id) => {
+                if (confirm('Tem certeza que deseja excluir esta categoria?')) {
+                    try {
+                        await categoriesAPI.delete(id);
+                        loadCategories();
+                    } catch (error) {
+                        console.error('Erro ao excluir categoria:', error);
+                        alert('Erro ao excluir categoria');
+                    }
                 }
             };
 
@@ -914,7 +530,9 @@ tr:hover {
 
                     <div className="dashboard-card">
                         <h3>Lista de Categorias</h3>
-                        {categories.length > 0 ? (
+                        {loading ? (
+                            <div>Carregando...</div>
+                        ) : categories.length > 0 ? (
                             <div className="table-container">
                                 <table>
                                     <thead>
@@ -929,7 +547,7 @@ tr:hover {
                                             <tr key={category.id}>
                                                 <td>{category.name}</td>
                                                 <td>
-                                                    <span className={`badge ${category.type === 'receita' ? 'badge-success' : 'badge-danger'}`}>
+                                                    <span className={`badge ${category.type === 'RECEITA' ? 'badge-success' : 'badge-danger'}`}>
                                                         {category.type}
                                                     </span>
                                                 </td>
@@ -978,8 +596,8 @@ tr:hover {
                                             value={formData.type}
                                             onChange={(e) => setFormData({...formData, type: e.target.value})}
                                         >
-                                            <option value="despesa">Despesa</option>
-                                            <option value="receita">Receita</option>
+                                            <option value="DESPESA">Despesa</option>
+                                            <option value="RECEITA">Receita</option>
                                         </select>
                                     </div>
                                     <button type="submit" className="btn">
@@ -1003,54 +621,67 @@ tr:hover {
                 amount: '',
                 categoryId: '',
                 date: '',
-                type: 'despesa'
+                type: 'DESPESA'
             });
+            const [loading, setLoading] = useState(true);
 
             useEffect(() => {
                 loadExpenses();
                 loadCategories();
             }, []);
 
-            const loadExpenses = () => {
-                const data = JSON.parse(localStorage.getItem('expenses') || '[]');
-                setExpenses(data);
+            const loadExpenses = async () => {
+                try {
+                    const data = await expensesAPI.list();
+                    setExpenses(data);
+                } catch (error) {
+                    console.error('Erro ao carregar lançamentos:', error);
+                } finally {
+                    setLoading(false);
+                }
             };
 
-            const loadCategories = () => {
-                const data = JSON.parse(localStorage.getItem('categories') || '[]');
-                setCategories(data);
+            const loadCategories = async () => {
+                try {
+                    const data = await categoriesAPI.list();
+                    setCategories(data);
+                } catch (error) {
+                    console.error('Erro ao carregar categorias:', error);
+                }
             };
 
-            const handleSubmit = (e) => {
+            const handleSubmit = async (e) => {
                 e.preventDefault();
-                let updatedExpenses = [...expenses];
-                
-                if (editingExpense) {
-                    updatedExpenses = expenses.map(exp => 
-                        exp.id === editingExpense.id 
-                            ? {...exp, ...formData, amount: parseFloat(formData.amount), categoryId: parseInt(formData.categoryId)} 
-                            : exp
-                    );
-                } else {
-                    const newExpense = {
-                        id: Date.now(),
+                try {
+                    const expenseData = {
                         ...formData,
                         amount: parseFloat(formData.amount),
-                        categoryId: parseInt(formData.categoryId)
+                        category_id: parseInt(formData.categoryId)
                     };
-                    updatedExpenses.push(newExpense);
+                    delete expenseData.categoryId;
+
+                    if (editingExpense) {
+                        await expensesAPI.update(editingExpense.id, expenseData);
+                    } else {
+                        await expensesAPI.create(expenseData);
+                    }
+                    loadExpenses();
+                    handleCloseModal();
+                } catch (error) {
+                    console.error('Erro ao salvar lançamento:', error);
+                    alert('Erro ao salvar lançamento');
                 }
-                
-                localStorage.setItem('expenses', JSON.stringify(updatedExpenses));
-                loadExpenses();
-                handleCloseModal();
             };
 
-            const handleDelete = (id) => {
+            const handleDelete = async (id) => {
                 if (confirm('Tem certeza que deseja excluir este lançamento?')) {
-                    const updatedExpenses = expenses.filter(exp => exp.id !== id);
-                    localStorage.setItem('expenses', JSON.stringify(updatedExpenses));
-                    loadExpenses();
+                    try {
+                        await expensesAPI.delete(id);
+                        loadExpenses();
+                    } catch (error) {
+                        console.error('Erro ao excluir lançamento:', error);
+                        alert('Erro ao excluir lançamento');
+                    }
                 }
             };
 
@@ -1059,7 +690,7 @@ tr:hover {
                 setFormData({
                     description: expense.description,
                     amount: expense.amount.toString(),
-                    categoryId: expense.categoryId.toString(),
+                    categoryId: expense.category_id.toString(),
                     date: expense.date,
                     type: expense.type
                 });
@@ -1074,7 +705,7 @@ tr:hover {
                     amount: '',
                     categoryId: '',
                     date: '',
-                    type: 'despesa'
+                    type: 'DESPESA'
                 });
             };
 
@@ -1088,7 +719,9 @@ tr:hover {
 
                     <div className="dashboard-card">
                         <h3>Lista de Lançamentos</h3>
-                        {expenses.length > 0 ? (
+                        {loading ? (
+                            <div>Carregando...</div>
+                        ) : expenses.length > 0 ? (
                             <div className="table-container">
                                 <table>
                                     <thead>
@@ -1103,18 +736,18 @@ tr:hover {
                                     </thead>
                                     <tbody>
                                         {expenses.map(expense => {
-                                            const category = categories.find(c => c.id === expense.categoryId);
+                                            const category = categories.find(c => c.id === expense.category_id);
                                             return (
                                                 <tr key={expense.id}>
                                                     <td>{new Date(expense.date).toLocaleDateString('pt-BR')}</td>
                                                     <td>{expense.description}</td>
                                                     <td>{category?.name || 'Sem categoria'}</td>
                                                     <td>
-                                                        <span className={`badge ${expense.type === 'receita' ? 'badge-success' : 'badge-danger'}`}>
+                                                        <span className={`badge ${expense.type === 'RECEITA' ? 'badge-success' : 'badge-danger'}`}>
                                                             {expense.type}
                                                         </span>
                                                     </td>
-                                                    <td>R$ {expense.amount.toFixed(2)}</td>
+                                                    <td>R$ {parseFloat(expense.amount).toFixed(2)}</td>
                                                     <td>
                                                         <div className="action-buttons">
                                                             <button className="btn btn-secondary" onClick={() => handleEdit(expense)}>
@@ -1195,8 +828,8 @@ tr:hover {
                                             value={formData.type}
                                             onChange={(e) => setFormData({...formData, type: e.target.value})}
                                         >
-                                            <option value="despesa">Despesa</option>
-                                            <option value="receita">Receita</option>
+                                            <option value="DESPESA">Despesa</option>
+                                            <option value="RECEITA">Receita</option>
                                         </select>
                                     </div>
                                     <button type="submit" className="btn">
@@ -1218,56 +851,70 @@ tr:hover {
             const [formData, setFormData] = useState({
                 description: '',
                 amount: '',
-                categoryId: '',
-                dayOfMonth: ''
+                category_id: '',
+                day_of_month: ''
             });
+            const [loading, setLoading] = useState(true);
 
             useEffect(() => {
                 loadFixedExpenses();
                 loadCategories();
             }, []);
 
-            const loadFixedExpenses = () => {
-                const data = JSON.parse(localStorage.getItem('fixedExpenses') || '[]');
-                setFixedExpenses(data);
+            const loadFixedExpenses = async () => {
+                try {
+                    const data = await fixedExpensesAPI.list();
+                    setFixedExpenses(data);
+                } catch (error) {
+                    console.error('Erro ao carregar despesas fixas:', error);
+                } finally {
+                    setLoading(false);
+                }
             };
 
-            const loadCategories = () => {
-                const data = JSON.parse(localStorage.getItem('categories') || '[]');
-                setCategories(data.filter(c => c.type === 'despesa'));
+            const loadCategories = async () => {
+                try {
+                    const data = await categoriesAPI.list();
+                    setCategories(data.filter(c => c.type === 'DESPESA'));
+                } catch (error) {
+                    console.error('Erro ao carregar categorias:', error);
+                }
             };
 
-            const handleSubmit = (e) => {
+            const handleSubmit = async (e) => {
                 e.preventDefault();
-                let updatedExpenses = [...fixedExpenses];
-                
-                if (editingExpense) {
-                    updatedExpenses = fixedExpenses.map(exp => 
-                        exp.id === editingExpense.id 
-                            ? {...exp, ...formData, amount: parseFloat(formData.amount), categoryId: parseInt(formData.categoryId), dayOfMonth: parseInt(formData.dayOfMonth)} 
-                            : exp
-                    );
-                } else {
-                    const newExpense = {
-                        id: Date.now(),
+                try {
+                    const expenseData = {
                         ...formData,
                         amount: parseFloat(formData.amount),
-                        categoryId: parseInt(formData.categoryId),
-                        dayOfMonth: parseInt(formData.dayOfMonth)
+                        category_id: parseInt(formData.category_id),
+                        day_of_month: parseInt(formData.day_of_month)
                     };
-                    updatedExpenses.push(newExpense);
+                    delete expenseData.categoryId;
+                    delete expenseData.dayOfMonth;
+
+                    if (editingExpense) {
+                        await fixedExpensesAPI.update(editingExpense.id, expenseData);
+                    } else {
+                        await fixedExpensesAPI.create(expenseData);
+                    }
+                    loadFixedExpenses();
+                    handleCloseModal();
+                } catch (error) {
+                    console.error('Erro ao salvar despesa fixa:', error);
+                    alert('Erro ao salvar despesa fixa');
                 }
-                
-                localStorage.setItem('fixedExpenses', JSON.stringify(updatedExpenses));
-                loadFixedExpenses();
-                handleCloseModal();
             };
 
-            const handleDelete = (id) => {
+            const handleDelete = async (id) => {
                 if (confirm('Tem certeza que deseja excluir esta despesa fixa?')) {
-                    const updatedExpenses = fixedExpenses.filter(exp => exp.id !== id);
-                    localStorage.setItem('fixedExpenses', JSON.stringify(updatedExpenses));
-                    loadFixedExpenses();
+                    try {
+                        await fixedExpensesAPI.delete(id);
+                        loadFixedExpenses();
+                    } catch (error) {
+                        console.error('Erro ao excluir despesa fixa:', error);
+                        alert('Erro ao excluir despesa fixa');
+                    }
                 }
             };
 
@@ -1276,8 +923,8 @@ tr:hover {
                 setFormData({
                     description: expense.description,
                     amount: expense.amount.toString(),
-                    categoryId: expense.categoryId.toString(),
-                    dayOfMonth: expense.dayOfMonth.toString()
+                    category_id: expense.category_id.toString(),
+                    day_of_month: expense.day_of_month.toString()
                 });
                 setShowModal(true);
             };
@@ -1288,8 +935,8 @@ tr:hover {
                 setFormData({
                     description: '',
                     amount: '',
-                    categoryId: '',
-                    dayOfMonth: ''
+                    category_id: '',
+                    day_of_month: ''
                 });
             };
 
@@ -1303,7 +950,9 @@ tr:hover {
 
                     <div className="dashboard-card">
                         <h3>Lista de Despesas Fixas</h3>
-                        {fixedExpenses.length > 0 ? (
+                        {loading ? (
+                            <div>Carregando...</div>
+                        ) : fixedExpenses.length > 0 ? (
                             <div className="table-container">
                                 <table>
                                     <thead>
@@ -1317,13 +966,13 @@ tr:hover {
                                     </thead>
                                     <tbody>
                                         {fixedExpenses.map(expense => {
-                                            const category = categories.find(c => c.id === expense.categoryId);
+                                            const category = categories.find(c => c.id === expense.category_id);
                                             return (
                                                 <tr key={expense.id}>
                                                     <td>{expense.description}</td>
                                                     <td>{category?.name || 'Sem categoria'}</td>
-                                                    <td>R$ {expense.amount.toFixed(2)}</td>
-                                                    <td>Dia {expense.dayOfMonth}</td>
+                                                    <td>R$ {parseFloat(expense.amount).toFixed(2)}</td>
+                                                    <td>Dia {expense.day_of_month}</td>
                                                     <td>
                                                         <div className="action-buttons">
                                                             <button className="btn btn-secondary" onClick={() => handleEdit(expense)}>
@@ -1378,8 +1027,8 @@ tr:hover {
                                         <label>Categoria</label>
                                         <select
                                             required
-                                            value={formData.categoryId}
-                                            onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
+                                            value={formData.category_id}
+                                            onChange={(e) => setFormData({...formData, category_id: e.target.value})}
                                         >
                                             <option value="">Selecione...</option>
                                             {categories.map(category => (
@@ -1396,8 +1045,8 @@ tr:hover {
                                             min="1"
                                             max="31"
                                             required
-                                            value={formData.dayOfMonth}
-                                            onChange={(e) => setFormData({...formData, dayOfMonth: e.target.value})}
+                                            value={formData.day_of_month}
+                                            onChange={(e) => setFormData({...formData, day_of_month: e.target.value})}
                                         />
                                     </div>
                                     <button type="submit" className="btn">
@@ -1413,68 +1062,83 @@ tr:hover {
 
         const Income = () => {
             const [income, setIncome] = useState({
-                fixed: 0,
-                variable: []
-               
+                fixed_amount: 0,
+                bonus_amount: 0
             });
+            const [variableIncomes, setVariableIncomes] = useState([]);
             const [showVariableModal, setShowVariableModal] = useState(false);
             const [editingVariable, setEditingVariable] = useState(null);
             const [variableForm, setVariableForm] = useState({
                 description: '',
                 amount: '',
-                validUntil: ''
+                valid_until: '',
+                is_active: true
             });
+            const [loading, setLoading] = useState(true);
 
             useEffect(() => {
                 loadIncome();
             }, []);
 
-            const loadIncome = () => {
-                const data = JSON.parse(localStorage.getItem('income') || '{"fixed": 0, "variable": []}');
-                setIncome(data);
+            const loadIncome = async () => {
+                try {
+                    const [incomeData, variableData] = await Promise.all([
+                        incomeAPI.get(),
+                        incomeAPI.listVariable()
+                    ]);
+                    setIncome(incomeData);
+                    setVariableIncomes(variableData);
+                } catch (error) {
+                    console.error('Erro ao carregar receitas:', error);
+                } finally {
+                    setLoading(false);
+                }
             };
 
-            const saveIncome = (newIncome) => {
-                localStorage.setItem('income', JSON.stringify(newIncome));
-                loadIncome();
+            const handleFixedChange = async (value) => {
+                try {
+                    await incomeAPI.update({
+                        fixed_amount: parseFloat(value) || 0,
+                        bonus_amount: income.bonus_amount
+                    });
+                    setIncome(prev => ({ ...prev, fixed_amount: parseFloat(value) || 0 }));
+                } catch (error) {
+                    console.error('Erro ao atualizar receita fixa:', error);
+                    alert('Erro ao atualizar receita fixa');
+                }
             };
 
-            const handleFixedChange = (value) => {
-                const newIncome = { ...income, fixed: parseFloat(value) || 0 };
-                saveIncome(newIncome);
-            };
-
-
-
-            const handleVariableSubmit = (e) => {
+            const handleVariableSubmit = async (e) => {
                 e.preventDefault();
-                let updatedVariable = [...income.variable];
-                
-                if (editingVariable) {
-                    updatedVariable = income.variable.map(v => 
-                        v.id === editingVariable.id 
-                            ? {...v, ...variableForm, amount: parseFloat(variableForm.amount)} 
-                            : v
-                    );
-                } else {
-                    const newVariable = {
-                        id: Date.now(),
+                try {
+                    const variableData = {
                         ...variableForm,
                         amount: parseFloat(variableForm.amount)
                     };
-                    updatedVariable.push(newVariable);
+                    delete variableData.validUntil;
+
+                    if (editingVariable) {
+                        await incomeAPI.updateVariable(editingVariable.id, variableData);
+                    } else {
+                        await incomeAPI.createVariable(variableData);
+                    }
+                    loadIncome();
+                    handleCloseVariableModal();
+                } catch (error) {
+                    console.error('Erro ao salvar receita variável:', error);
+                    alert('Erro ao salvar receita variável');
                 }
-                
-                const newIncome = { ...income, variable: updatedVariable };
-                saveIncome(newIncome);
-                handleCloseVariableModal();
             };
 
-            const handleDeleteVariable = (id) => {
+            const handleDeleteVariable = async (id) => {
                 if (confirm('Tem certeza que deseja excluir esta receita variável?')) {
-                    const updatedVariable = income.variable.filter(v => v.id !== id);
-                    const newIncome = { ...income, variable: updatedVariable };
-                    saveIncome(newIncome);
+                    try {
+                        await incomeAPI.deleteVariable(id);
+                        loadIncome();
+                    } catch (error) {
+                        console.error('Erro ao excluir receita variável:', error);
+                        alert('Erro ao excluir receita variável');
+                    }
                 }
             };
 
@@ -1483,7 +1147,8 @@ tr:hover {
                 setVariableForm({
                     description: variable.description,
                     amount: variable.amount.toString(),
-                    validUntil: variable.validUntil
+                    valid_until: variable.valid_until,
+                    is_active: variable.is_active
                 });
                 setShowVariableModal(true);
             };
@@ -1494,9 +1159,14 @@ tr:hover {
                 setVariableForm({
                     description: '',
                     amount: '',
-                    validUntil: ''
+                    valid_until: '',
+                    is_active: true
                 });
             };
+
+            if (loading) {
+                return <div>Carregando...</div>;
+            }
 
 
 
@@ -1507,7 +1177,7 @@ tr:hover {
                     <div className="stats-grid">
                         <div className="stat-card">
                             <h4>Receita Total Líquida</h4>
-                            <div className="value">R$ {(income.fixed + income.variable.reduce((sum, v) => sum + v.amount, 0)).toFixed(2)}</div>
+                            <div className="value">R$ {(income.fixed_amount + variableIncomes.reduce((sum, v) => sum + parseFloat(v.amount), 0)).toFixed(2)}</div>
                         </div>
                     </div>
 
@@ -1518,7 +1188,7 @@ tr:hover {
                             <input
                                 type="number"
                                 step="0.01"
-                                value={income.fixed}
+                                value={income.fixed_amount}
                                 onChange={(e) => handleFixedChange(e.target.value)}
                                 placeholder="0.00"
                             />
@@ -1531,7 +1201,7 @@ tr:hover {
                             Adicionar Receita Variável
                         </button>
                         
-                        {income.variable.length > 0 ? (
+                        {variableIncomes.length > 0 ? (
                             <div className="table-container">
                                 <table>
                                     <thead>
@@ -1543,11 +1213,11 @@ tr:hover {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {income.variable.map(variable => (
+                                        {variableIncomes.map(variable => (
                                             <tr key={variable.id}>
                                                 <td>{variable.description}</td>
-                                                <td>R$ {variable.amount.toFixed(2)}</td>
-                                                <td>{new Date(variable.validUntil).toLocaleDateString('pt-BR')}</td>
+                                                <td>R$ {parseFloat(variable.amount).toFixed(2)}</td>
+                                                <td>{variable.valid_until ? new Date(variable.valid_until).toLocaleDateString('pt-BR') : 'Indefinido'}</td>
                                                 <td>
                                                     <div className="action-buttons">
                                                         <button className="btn btn-secondary" onClick={() => handleEditVariable(variable)}>
@@ -1602,9 +1272,8 @@ tr:hover {
                                         <label>Válido Até</label>
                                         <input
                                             type="date"
-                                            required
-                                            value={variableForm.validUntil}
-                                            onChange={(e) => setVariableForm({...variableForm, validUntil: e.target.value})}
+                                            value={variableForm.valid_until}
+                                            onChange={(e) => setVariableForm({...variableForm, valid_until: e.target.value})}
                                         />
                                     </div>
                                     <button type="submit" className="btn">
