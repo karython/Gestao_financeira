@@ -1,4 +1,5 @@
 --prefer-binary
+pydantic_core==2.23.4
 
 aiomysql==0.3.2
 aiosmtplib==3.0.1
