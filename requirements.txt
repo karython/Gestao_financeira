@@ -1,9 +1,7 @@
 --prefer-binary
 
 # 🔧 Núcleo do Pydantic e dependências do FastAPI
-pydantic==2.5.0
-pydantic_core==2.14.1
-
+pydantic==2.8.2
 pydantic-settings==2.1.0
 
 # ⚙️ Banco de Dados e Migrations
