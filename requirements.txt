@@ -1,5 +1,5 @@
 --prefer-binary
-python-3.12.7
+
 
 # 🔧 Núcleo do Pydantic e dependências do FastAPI
 pydantic==2.8.2
