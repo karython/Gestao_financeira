@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
                     logger.info("Keepalive query succeeded")
                 except Exception as e:
                     logger.warning("Keepalive query failed: %s", e)
-                await asyncio.sleep(60)
+                await asyncio.sleep(30)
 
         keepalive_task = asyncio.create_task(_keepalive())
         yield
@@ -128,5 +128,5 @@ async def root():
 if __name__ == "__main__":
     # Force the default asyncio event loop implementation instead of uvloop
     # to avoid known interoperability issues between uvloop + aiomysql.
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, loop="asyncio")
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True, loop="asyncio")
 

@@ -9,8 +9,6 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="static/css/styles.css"/>
-    <link rel="icon" href="./static/img/lucro.png">
-    
 </head>
 <body>
 
@@ -20,8 +18,8 @@
         const { useState, useEffect } = React;
 
         // API Base URL
-        const API_BASE = 'https://gestao-financeira-tmqc.onrender.com';
-
+        const API_BASE = 'http://127.0.0.1:8000/api';
+0
         // API Helper Functions
         const apiRequest = async (endpoint, options = {}) => {
             const token = localStorage.getItem('token');
@@ -136,18 +134,6 @@
                 body: JSON.stringify(income)
             }),
             deleteVariable: (id) => apiRequest(`/income/variable/${id}/`, {
-                method: 'DELETE'
-            }),
-            listFixed: () => apiRequest('/income/fixed/'),
-            createFixed: (income) => apiRequest('/income/fixed/', {
-                method: 'POST',
-                body: JSON.stringify(income)
-            }),
-            updateFixed: (id, income) => apiRequest(`/income/fixed/${id}/`, {
-                method: 'PUT',
-                body: JSON.stringify(income)
-            }),
-            deleteFixed: (id) => apiRequest(`/income/fixed/${id}/`, {
                 method: 'DELETE'
             })
         };
@@ -394,7 +380,10 @@
                         dashboardAPI.recentTransactions()
                     ]);
                     setStats({
-                        ...statsData,
+                        total_balance: parseFloat(statsData.total_balance),
+                        monthly_income: parseFloat(statsData.monthly_income),
+                        monthly_expenses: parseFloat(statsData.monthly_expenses),
+                        active_categories: statsData.active_categories,
                         recentTransactions: transactions
                     });
                 } catch (error) {
@@ -414,15 +403,15 @@
                         <div className="stats-grid">
                             <div className="stat-card">
                                 <h4>Saldo Total</h4>
-                                <div className="value">R$ {parseFloat(stats.total_balance).toFixed(2)}</div>
+                                <div className="value">R$ {stats.total_balance.toFixed(2)}</div>
                             </div>
                             <div className="stat-card">
                                 <h4>Receita Mensal</h4>
-                                <div className="value">R$ {parseFloat(stats.monthly_income).toFixed(2)}</div>
+                                <div className="value">R$ {stats.monthly_income.toFixed(2)}</div>
                             </div>
                             <div className="stat-card">
                                 <h4>Despesas Mensal</h4>
-                                <div className="value">R$ {parseFloat(stats.monthly_expenses).toFixed(2)}</div>
+                                <div className="value">R$ {stats.monthly_expenses.toFixed(2)}</div>
                             </div>
                             <div className="stat-card">
                                 <h4>Categorias Ativas</h4>
@@ -451,9 +440,9 @@
                                                     <td>{new Date(expense.date).toLocaleDateString('pt-BR')}</td>
                                                     <td>{expense.description}</td>
                                                     <td>
-                                                        <span className={`badge ${(expense.type || '').toLowerCase() === 'receita' ? 'badge-success' : 'badge-danger'}`}>
-                                                                {expense.type}
-                                                            </span>
+                                                        <span className={`badge ${expense.type === 'RECEITA' ? 'badge-success' : 'badge-danger'}`}>
+                                                            {expense.type}
+                                                        </span>
                                                     </td>
                                                     <td>R$ {parseFloat(expense.amount).toFixed(2)}</td>
                                                 </tr>
@@ -561,7 +550,7 @@
                                             <tr key={category.id}>
                                                 <td>{category.name}</td>
                                                 <td>
-                                                    <span className={`badge ${(category.type || '').toLowerCase() === 'receita' ? 'badge-success' : 'badge-danger'}`}>
+                                                    <span className={`badge ${category.type === 'RECEITA' ? 'badge-success' : 'badge-danger'}`}>
                                                         {category.type}
                                                     </span>
                                                 </td>
@@ -610,8 +599,8 @@
                                             value={formData.type}
                                             onChange={(e) => setFormData({...formData, type: e.target.value})}
                                         >
-                                            <option value="despesa">Despesa</option>
-                                            <option value="receita">Receita</option>
+                                            <option value="DESPESA">Despesa</option>
+                                            <option value="RECEITA">Receita</option>
                                         </select>
                                     </div>
                                     <button type="submit" className="btn">
@@ -635,7 +624,7 @@
                 amount: '',
                 categoryId: '',
                 date: '',
-                type: 'despesa'
+                type: 'DESPESA'
             });
             const [loading, setLoading] = useState(true);
 
@@ -719,7 +708,7 @@
                     amount: '',
                     categoryId: '',
                     date: '',
-                    type: 'despesa'
+                    type: 'DESPESA'
                 });
             };
 
@@ -757,7 +746,7 @@
                                                     <td>{expense.description}</td>
                                                     <td>{category?.name || 'Sem categoria'}</td>
                                                     <td>
-                                                        <span className={`badge ${(expense.type || '').toLowerCase() === 'receita' ? 'badge-success' : 'badge-danger'}`}>
+                                                        <span className={`badge ${expense.type === 'RECEITA' ? 'badge-success' : 'badge-danger'}`}>
                                                             {expense.type}
                                                         </span>
                                                     </td>
@@ -820,7 +809,7 @@
                                             onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
                                         >
                                             <option value="">Selecione...</option>
-                                            {categories.filter(c => (c.type || '').toLowerCase() === (formData.type || '').toLowerCase()).map(category => (
+                                            {categories.filter(c => c.type === formData.type).map(category => (
                                                 <option key={category.id} value={category.id}>
                                                     {category.name}
                                                 </option>
@@ -842,8 +831,8 @@
                                             value={formData.type}
                                             onChange={(e) => setFormData({...formData, type: e.target.value})}
                                         >
-                                            <option value="despesa">Despesa</option>
-                                            <option value="receita">Receita</option>
+                                            <option value="DESPESA">Despesa</option>
+                                            <option value="RECEITA">Receita</option>
                                         </select>
                                     </div>
                                     <button type="submit" className="btn">
@@ -889,7 +878,7 @@
             const loadCategories = async () => {
                 try {
                     const data = await categoriesAPI.list();
-                    setCategories(data.filter(c => (c.type || '').toLowerCase() === 'despesa'));
+                    setCategories(data.filter(c => c.type === 'DESPESA'));
                 } catch (error) {
                     console.error('Erro ao carregar categorias:', error);
                 }
@@ -1080,18 +1069,9 @@
                 bonus_amount: 0
             });
             const [variableIncomes, setVariableIncomes] = useState([]);
-            const [fixedIncomes, setFixedIncomes] = useState([]);
             const [showVariableModal, setShowVariableModal] = useState(false);
-            const [showFixedModal, setShowFixedModal] = useState(false);
             const [editingVariable, setEditingVariable] = useState(null);
-            const [editingFixed, setEditingFixed] = useState(null);
             const [variableForm, setVariableForm] = useState({
-                description: '',
-                amount: '',
-                valid_until: '',
-                is_active: true
-            });
-            const [fixedForm, setFixedForm] = useState({
                 description: '',
                 amount: '',
                 valid_until: '',
@@ -1105,14 +1085,12 @@
 
             const loadIncome = async () => {
                 try {
-                    const [incomeData, variableData, fixedData] = await Promise.all([
+                    const [incomeData, variableData] = await Promise.all([
                         incomeAPI.get(),
-                        incomeAPI.listVariable(),
-                        incomeAPI.listFixed()
+                        incomeAPI.listVariable()
                     ]);
                     setIncome(incomeData);
                     setVariableIncomes(variableData);
-                    setFixedIncomes(fixedData);
                 } catch (error) {
                     console.error('Erro ao carregar receitas:', error);
                 } finally {
@@ -1131,61 +1109,6 @@
                     console.error('Erro ao atualizar receita fixa:', error);
                     alert('Erro ao atualizar receita fixa');
                 }
-            };
-
-            const handleFixedSubmit = async (e) => {
-                e.preventDefault();
-                try {
-                    const fixedData = {
-                        ...fixedForm,
-                        amount: parseFloat(fixedForm.amount)
-                    };
-
-                    if (editingFixed) {
-                        await incomeAPI.updateFixed(editingFixed.id, fixedData);
-                    } else {
-                        await incomeAPI.createFixed(fixedData);
-                    }
-                    loadIncome();
-                    handleCloseFixedModal();
-                } catch (error) {
-                    console.error('Erro ao salvar receita fixa:', error);
-                    alert('Erro ao salvar receita fixa');
-                }
-            };
-
-            const handleDeleteFixed = async (id) => {
-                if (confirm('Tem certeza que deseja excluir esta receita fixa?')) {
-                    try {
-                        await incomeAPI.deleteFixed(id);
-                        loadIncome();
-                    } catch (error) {
-                        console.error('Erro ao excluir receita fixa:', error);
-                        alert('Erro ao excluir receita fixa');
-                    }
-                }
-            };
-
-            const handleEditFixed = (fixed) => {
-                setEditingFixed(fixed);
-                setFixedForm({
-                    description: fixed.description,
-                    amount: fixed.amount.toString(),
-                    valid_until: fixed.valid_until,
-                    is_active: fixed.is_active
-                });
-                setShowFixedModal(true);
-            };
-
-            const handleCloseFixedModal = () => {
-                setShowFixedModal(false);
-                setEditingFixed(null);
-                setFixedForm({
-                    description: '',
-                    amount: '',
-                    valid_until: '',
-                    is_active: true
-                });
             };
 
             const handleVariableSubmit = async (e) => {
@@ -1257,7 +1180,7 @@
                     <div className="stats-grid">
                         <div className="stat-card">
                             <h4>Receita Total Líquida</h4>
-                            <div className="value">R$ {(parseFloat(income.fixed_amount) + variableIncomes.reduce((sum, v) => sum + parseFloat(v.amount), 0) + fixedIncomes.reduce((sum, f) => sum + parseFloat(f.amount), 0)).toFixed(2)}</div>
+                            <div className="value">R$ {(income.fixed_amount + variableIncomes.reduce((sum, v) => sum + parseFloat(v.amount), 0)).toFixed(2)}</div>
                         </div>
                     </div>
 
@@ -1276,56 +1199,11 @@
                     </div>
 
                     <div className="dashboard-card">
-                        <h3>Receitas Fixas</h3>
-                        <button className="btn" onClick={() => setShowFixedModal(true)} style={{marginBottom: '20px'}}>
-                            Adicionar Receita Fixa
-                        </button>
-
-                        {fixedIncomes.length > 0 ? (
-                            <div className="table-container">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Descrição</th>
-                                            <th>Valor</th>
-                                            <th>Válido Até</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {fixedIncomes.map(fixed => (
-                                            <tr key={fixed.id}>
-                                                <td>{fixed.description}</td>
-                                                <td>R$ {parseFloat(fixed.amount).toFixed(2)}</td>
-                                                <td>{fixed.valid_until ? new Date(fixed.valid_until).toLocaleDateString('pt-BR') : 'Indefinido'}</td>
-                                                <td>
-                                                    <div className="action-buttons">
-                                                        <button className="btn btn-secondary" onClick={() => handleEditFixed(fixed)}>
-                                                            Editar
-                                                        </button>
-                                                        <button className="btn btn-danger" onClick={() => handleDeleteFixed(fixed.id)}>
-                                                            Excluir
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="empty-state">
-                                <p>Nenhuma receita fixa cadastrada</p>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="dashboard-card">
                         <h3>Receitas Variáveis</h3>
                         <button className="btn" onClick={() => setShowVariableModal(true)} style={{marginBottom: '20px'}}>
                             Adicionar Receita Variável
                         </button>
-
+                        
                         {variableIncomes.length > 0 ? (
                             <div className="table-container">
                                 <table>
@@ -1365,49 +1243,6 @@
                         )}
                     </div>
 
-
-                    {showFixedModal && (
-                        <div className="modal-overlay" onClick={handleCloseFixedModal}>
-                            <div className="modal" onClick={(e) => e.stopPropagation()}>
-                                <div className="modal-header">
-                                    <h3>{editingFixed ? 'Editar Receita Fixa' : 'Nova Receita Fixa'}</h3>
-                                    <button className="close-btn" onClick={handleCloseFixedModal}>×</button>
-                                </div>
-                                <form onSubmit={handleFixedSubmit}>
-                                    <div className="form-group">
-                                        <label>Descrição</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={fixedForm.description}
-                                            onChange={(e) => setFixedForm({...fixedForm, description: e.target.value})}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Valor</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            required
-                                            value={fixedForm.amount}
-                                            onChange={(e) => setFixedForm({...fixedForm, amount: e.target.value})}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Válido Até</label>
-                                        <input
-                                            type="date"
-                                            value={fixedForm.valid_until}
-                                            onChange={(e) => setFixedForm({...fixedForm, valid_until: e.target.value})}
-                                        />
-                                    </div>
-                                    <button type="submit" className="btn">
-                                        {editingFixed ? 'Salvar' : 'Adicionar'}
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
 
                     {showVariableModal && (
                         <div className="modal-overlay" onClick={handleCloseVariableModal}>
@@ -1457,128 +1292,88 @@
 
         const Reports = () => {
             const [reportType, setReportType] = useState('mensal');
-            const [categoryFilter, setCategoryFilter] = useState('');
+            const [categoryFilter, setCategoryFilter] = useState('all');
             const [categories, setCategories] = useState([]);
             const [reportData, setReportData] = useState(null);
-            const [loading, setLoading] = useState(false);
 
             useEffect(() => {
-                loadCategories();
+                const cats = JSON.parse(localStorage.getItem('categories') || '[]');
+                setCategories(cats);
             }, []);
 
-            const loadCategories = async () => {
-                try {
-                    const data = await categoriesAPI.list();
-                    setCategories(data);
-                } catch (error) {
-                    console.error('Erro ao carregar categorias:', error);
-                }
-            };
-
-            const generateReport = async () => {
-                setLoading(true);
-                try {
-                    const now = new Date();
-                    const params = {
-                        type: reportType,
-                        month: now.getMonth() + 1,
-                        year: now.getFullYear()
-                    };
-
-                    if (categoryFilter && categoryFilter !== '') {
-                        params.category_id = categoryFilter;
-                    }
-
-                    const data = await reportsAPI.generate(params);
-                    setReportData({
-                        ...data,
-                        period: reportType === 'mensal' ? `${now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}` : now.getFullYear()
+            const generateReport = () => {
+                const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+                const income = JSON.parse(localStorage.getItem('income') || '{}');
+                
+                const now = new Date();
+                let filteredExpenses = expenses;
+                
+                if (reportType === 'mensal') {
+                    filteredExpenses = expenses.filter(e => {
+                        const date = new Date(e.date);
+                        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
                     });
-                } catch (error) {
-                    console.error('Erro ao gerar relatório:', error);
-                    alert('Erro ao gerar relatório');
-                } finally {
-                    setLoading(false);
+                } else {
+                    filteredExpenses = expenses.filter(e => {
+                        const date = new Date(e.date);
+                        return date.getFullYear() === now.getFullYear();
+                    });
                 }
+
+                if (categoryFilter !== 'all') {
+                    filteredExpenses = filteredExpenses.filter(e => e.categoryId === parseInt(categoryFilter));
+                }
+
+                const totalExpenses = filteredExpenses.reduce((sum, e) => e.type === 'despesa' ? sum + e.amount : sum, 0);
+                const totalIncomeAmount = (income.fixed || 0) + 
+                    (income.variable?.reduce((sum, v) => sum + v.amount, 0) || 0); 
+                    
+
+                setReportData({
+                    type: reportType,
+                    period: reportType === 'mensal' ? `${now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}` : now.getFullYear(),
+                    totalIncome: totalIncomeAmount,
+                    totalExpenses,
+                    balance: totalIncomeAmount - totalExpenses,
+                    expenses: filteredExpenses,
+                    categories: categories
+                });
             };
 
-            const downloadPDF = async () => {
+            const downloadPDF = () => {
                 if (!reportData) return;
-
-                try {
-                    const now = new Date();
-                    const params = {
-                        type: reportType,
-                        month: now.getMonth() + 1,
-                        year: now.getFullYear()
-                    };
-
-                    if (categoryFilter && categoryFilter !== '') {
-                        params.category_id = categoryFilter;
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(20);
+                doc.text('Relatório Financeiro', 20, 20);
+                
+                doc.setFontSize(12);
+                doc.text(`Período: ${reportData.period}`, 20, 35);
+                doc.text(`Receita Total: R$ ${reportData.totalIncome.toFixed(2)}`, 20, 45);
+                doc.text(`Despesas Total: R$ ${reportData.totalExpenses.toFixed(2)}`, 20, 55);
+                doc.text(`Saldo: R$ ${reportData.balance.toFixed(2)}`, 20, 65);
+                
+                doc.text('Detalhamento:', 20, 80);
+                let y = 90;
+                
+                reportData.expenses.forEach(expense => {
+                    const category = reportData.categories.find(c => c.id === expense.categoryId);
+                    doc.text(`${new Date(expense.date).toLocaleDateString('pt-BR')} - ${expense.description} (${category?.name || 'Sem categoria'}): R$ ${expense.amount.toFixed(2)}`, 20, y);
+                    y += 10;
+                    if (y > 280) {
+                        doc.addPage();
+                        y = 20;
                     }
-
-                    const response = await fetch(`${API_BASE}/reports/pdf/?${new URLSearchParams(params)}`, {
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`
-                        }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Erro ao baixar PDF');
-                    }
-
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `relatorio-${reportType}-${now.getFullYear()}-${now.getMonth() + 1}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-                } catch (error) {
-                    console.error('Erro ao baixar PDF:', error);
-                    alert('Erro ao baixar PDF');
-                }
+                });
+                
+                doc.save(`relatorio-${reportData.type}-${Date.now()}.pdf`);
+                alert('PDF baixado com sucesso!');
             };
 
-            const sendEmail = async () => {
-                if (!reportData) return;
-
-                const email = prompt('Digite o email para enviar o relatório:');
-                if (!email) return;
-
-                try {
-                    const now = new Date();
-                    const params = {
-                        type: reportType,
-                        month: now.getMonth() + 1,
-                        year: now.getFullYear(),
-                        email: email
-                    };
-
-                    if (categoryFilter && categoryFilter !== '') {
-                        params.category_id = categoryFilter;
-                    }
-
-                    const response = await fetch(`${API_BASE}/reports/email/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`
-                        },
-                        body: JSON.stringify(params)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Erro ao enviar email');
-                    }
-
-                    alert('Relatório enviado por email com sucesso!');
-                } catch (error) {
-                    console.error('Erro ao enviar email:', error);
-                    alert('Erro ao enviar email');
-                }
+            const sendEmail = () => {
+                alert('Funcionalidade de envio por email será implementada com o backend');
             };
 
             return (
@@ -1591,38 +1386,35 @@
                             <select value={reportType} onChange={(e) => setReportType(e.target.value)}>
                                 <option value="mensal">Mensal</option>
                                 <option value="anual">Anual</option>
-                                <option value="categoria">Por Categoria</option>
                             </select>
-                            {reportType === 'categoria' && (
-                                <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-                                    <option value="">Selecione uma categoria</option>
-                                    {categories.map(cat => (
-                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                    ))}
-                                </select>
-                            )}
-                            <button className="btn" onClick={generateReport} disabled={loading}>
-                                {loading ? 'Gerando...' : 'Gerar Relatório'}
+                            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                                <option value="all">Todas as Categorias</option>
+                                {categories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                            </select>
+                            <button className="btn" onClick={generateReport}>
+                                Gerar Relatório
                             </button>
                         </div>
                     </div>
 
                     {reportData && (
                         <div className="dashboard-card">
-                            <h3>Relatório {reportData.type === 'mensal' ? 'Mensal' : reportData.type === 'anual' ? 'Anual' : 'Por Categoria'} - {reportData.period}</h3>
-
+                            <h3>Relatório {reportData.type === 'mensal' ? 'Mensal' : 'Anual'} - {reportData.period}</h3>
+                            
                             <div className="stats-grid" style={{marginBottom: '30px'}}>
                                 <div className="stat-card">
                                     <h4>Receita Total</h4>
-                                    <div className="value">R$ {parseFloat(reportData.total_income).toFixed(2)}</div>
+                                    <div className="value">R$ {reportData.totalIncome.toFixed(2)}</div>
                                 </div>
                                 <div className="stat-card">
                                     <h4>Despesas Total</h4>
-                                    <div className="value">R$ {parseFloat(reportData.total_expense).toFixed(2)}</div>
+                                    <div className="value">R$ {reportData.totalExpenses.toFixed(2)}</div>
                                 </div>
                                 <div className="stat-card">
                                     <h4>Saldo</h4>
-                                    <div className="value">R$ {parseFloat(reportData.balance).toFixed(2)}</div>
+                                    <div className="value">R$ {reportData.balance.toFixed(2)}</div>
                                 </div>
                             </div>
 
@@ -1635,38 +1427,37 @@
                                 </button>
                             </div>
 
-                            {reportData.transactions && reportData.transactions.length > 0 ? (
-                                <div className="table-container">
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Data</th>
-                                                <th>Descrição</th>
-                                                <th>Tipo</th>
-                                                <th>Valor</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {reportData.transactions.map((transaction, index) => (
-                                                <tr key={`${transaction.id}-${index}`}>
-                                                    <td>{new Date(transaction.date).toLocaleDateString('pt-BR')}</td>
-                                                    <td>{transaction.description}</td>
+                            <div className="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Descrição</th>
+                                            <th>Categoria</th>
+                                            <th>Tipo</th>
+                                            <th>Valor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {reportData.expenses.map(expense => {
+                                            const category = reportData.categories.find(c => c.id === expense.categoryId);
+                                            return (
+                                                <tr key={expense.id}>
+                                                    <td>{new Date(expense.date).toLocaleDateString('pt-BR')}</td>
+                                                    <td>{expense.description}</td>
+                                                    <td>{category?.name || 'Sem categoria'}</td>
                                                     <td>
-                                                        <span className={`badge ${transaction.type === 'receita' ? 'badge-success' : 'badge-danger'}`}>
-                                                            {transaction.type}
+                                                        <span className={`badge ${expense.type === 'receita' ? 'badge-success' : 'badge-danger'}`}>
+                                                            {expense.type}
                                                         </span>
                                                     </td>
-                                                    <td>R$ {parseFloat(transaction.amount).toFixed(2)}</td>
+                                                    <td>R$ {expense.amount.toFixed(2)}</td>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ) : (
-                                <div className="empty-state">
-                                    <p>Nenhuma transação encontrada para o período selecionado</p>
-                                </div>
-                            )}
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -1800,34 +1591,40 @@
                 password: '',
                 newPassword: ''
             });
-            const [loading, setLoading] = useState(false);
 
-            const handleSubmit = async (e) => {
+            const handleSubmit = (e) => {
                 e.preventDefault();
-                setLoading(true);
-
-                try {
-                    const updateData = {
+                
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const userIndex = users.findIndex(u => u.id === currentUser.id);
+                
+                if (userIndex !== -1) {
+                    users[userIndex] = {
+                        ...users[userIndex],
                         name: formData.name,
-                        email: formData.email
+                        email: formData.email,
+                        password: formData.newPassword || users[userIndex].password,
+                        avatar: formData.name.charAt(0).toUpperCase()
                     };
-
-                    if (formData.newPassword) {
-                        updateData.password = formData.newPassword;
-                    }
-
-                    const updatedUser = await authAPI.updateProfile(updateData);
-
-                    // Atualizar o estado local e localStorage
+                    
+                    localStorage.setItem('users', JSON.stringify(users));
+                    localStorage.setItem('currentUser', JSON.stringify(users[userIndex]));
+                    setCurrentUser(users[userIndex]);
+                    
+                    alert('Configurações salvas com sucesso!');
+                } else {
+                    // Se o usuário não existir, criar um novo
+                    const updatedUser = {
+                        ...currentUser,
+                        name: formData.name,
+                        email: formData.email,
+                        password: formData.newPassword || currentUser.password,
+                        avatar: formData.name.charAt(0).toUpperCase()
+                    };
+                    
                     localStorage.setItem('currentUser', JSON.stringify(updatedUser));
                     setCurrentUser(updatedUser);
-
                     alert('Configurações salvas com sucesso!');
-                } catch (error) {
-                    console.error('Erro ao salvar configurações:', error);
-                    alert('Erro ao salvar configurações. Tente novamente.');
-                } finally {
-                    setLoading(false);
                 }
             };
 
@@ -1876,8 +1673,8 @@
                                     placeholder="Nova senha"
                                 />
                             </div>
-                            <button type="submit" className="btn" disabled={loading}>
-                                {loading ? 'Salvando...' : 'Salvar Alterações'}
+                            <button type="submit" className="btn">
+                                Salvar Alterações
                             </button>
                         </form>
                     </div>

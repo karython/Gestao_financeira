@@ -11,9 +11,9 @@ engine = create_async_engine(
     future=True,
     # Enable pre-ping to check connection health before use, preventing "Connection reset by peer" errors
     pool_pre_ping=True,
-    # Recycle connections every 5 minutes to avoid using connections closed by the server.
+    # Recycle connections every 4 minutes to avoid using connections closed by the server.
     # Make sure this value is lower than MySQL's wait_timeout.
-    pool_recycle=300,
+    pool_recycle=240,
     pool_size=5,  # Number of connections to keep in pool
     max_overflow=10,  # Max additional connections
     pool_timeout=30,  # Timeout for getting connection from pool
