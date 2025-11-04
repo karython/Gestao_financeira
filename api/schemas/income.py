@@ -19,7 +19,7 @@ class IncomeResponse(IncomeBase):
     user_id: int
     created_at: datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class VariableIncomeBase(BaseModel):
@@ -72,7 +72,7 @@ class VariableIncomeResponse(VariableIncomeBase):
     is_active: bool
     created_at: datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class FixedIncomeBase(BaseModel):
@@ -104,5 +104,5 @@ class FixedIncomeResponse(FixedIncomeBase):
     user_id: int
     created_at: datetime
     class Config:
-        orm_mode = True
+        from_attributes = True
 
