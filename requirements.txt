@@ -18,6 +18,8 @@ PyJWT==2.10.1
 ecdsa==0.19.1
 rsa==4.9
 pyasn1==0.6.1
+bcrypt
+
 
 # 📧 E-mail e validação
 aiosmtplib==3.0.2
