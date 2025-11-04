@@ -1,46 +1,45 @@
 --prefer-binary
 
-
 # 🔧 Núcleo do Pydantic e dependências do FastAPI
-pydantic==2.8.2
-pydantic-settings==2.1.0
+pydantic==2.10.3
+pydantic-settings==2.6.1
 
 # ⚙️ Banco de Dados e Migrations
-SQLAlchemy==2.0.25
+SQLAlchemy==2.0.36
 
-alembic==1.12.1
+alembic==1.14.0
 PyMySQL==1.1.1
 aiomysql==0.3.2
 
 # 🔐 Segurança e Criptografia
 passlib==1.7.4
-PyJWT==2.8.0
+PyJWT==2.10.1
 ecdsa==0.19.1
 rsa==4.9
 pyasn1==0.6.1
 
 # 📧 E-mail e validação
-aiosmtplib==3.0.1
+aiosmtplib==3.0.2
 email-validator==2.2.0
 dnspython==2.7.0
-idna==3.7
+idna==3.10
 
 # 🧩 Ferramentas e utilitários
 python-dotenv==1.0.1
-python-multipart==0.0.6
+python-multipart==0.0.17
 fpdf==1.7.2
 typing_extensions==4.12.2
 six==1.16.0
-sniffio==1.3.0
+sniffio==1.3.1
 annotated-types==0.7.0
 
 # 🖼️ Imagens e templates
-Mako==1.3.5
+Mako==1.3.8
 
 # ⚡ Servidor e desempenho
-fastapi==0.104.1
-starlette==0.27.0
-uvicorn==0.24.0.post1
+fastapi==0.115.6
+starlette==0.41.3
+uvicorn==0.32.1
 watchgod==0.8.2
 anyio==3.7.1
 click==8.1.7
