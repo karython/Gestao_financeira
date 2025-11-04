@@ -604,6 +604,35 @@
             recentTransactions: (limit = 10) => apiRequest(`/dashboard/recent-transactions/?limit=${limit}`)
         };
 
+        // Helper function to find category name
+        function getCategoryName(expense, categories) {
+            let categoryName = 'Sem categoria';
+            
+            if (expense.category_id) {
+                const cat = categories.find(c => c.id === expense.category_id);
+                if (cat) return cat.name;
+            }
+            
+            if (expense.category_id) {
+                const cat = categories.find(c => c.id == expense.category_id);
+                if (cat) return cat.name;
+            }
+            
+            if (expense.category) {
+                if (typeof expense.category === 'object') {
+                    return expense.category.name || 'Sem categoria';
+                }
+                return expense.category;
+            }
+            
+            if (expense.categoryId) {
+                const cat = categories.find(c => c.id == expense.categoryId);
+                if (cat) return cat.name;
+            }
+            
+            return categoryName;
+        }
+
         // App State
         const state = {
             isAuthenticated: false,
@@ -657,7 +686,6 @@
             `;
 
             let isRegister = false;
-
             const nameInput = document.getElementById('name');
             
             document.getElementById('toggleMode').addEventListener('click', () => {
@@ -667,20 +695,20 @@
                 document.getElementById('toggleMode').textContent = isRegister ? 'Já tem conta? Faça login' : 'Não tem conta? Cadastre-se';
                 document.getElementById('nameGroup').classList.toggle('hidden', !isRegister);
                 
-                // Remove/adiciona o atributo required dinamicamente
                 if (isRegister) {
                     nameInput.setAttribute('required', '');
                 } else {
                     nameInput.removeAttribute('required');
-                    nameInput.value = ''; // Limpa o campo ao trocar de modo
+                    nameInput.value = '';
                 }
             });
 
             document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
-                // Validação manual do campo nome quando está em modo registro
+                const errorDiv = document.getElementById('errorMessage');
                 const nameInput = document.getElementById('name');
+                
                 if (isRegister && !nameInput.value.trim()) {
                     errorDiv.textContent = 'Por favor, preencha o campo nome.';
                     errorDiv.style.display = 'block';
@@ -691,7 +719,6 @@
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 const name = nameInput.value;
-                const errorDiv = document.getElementById('errorMessage');
                 const submitBtn = e.target.querySelector('button[type="submit"]');
 
                 submitBtn.disabled = true;
@@ -886,8 +913,8 @@
                                                 <td>${new Date(expense.date).toLocaleDateString('pt-BR')}</td>
                                                 <td>${expense.description}</td>
                                                 <td>
-                                                    <span class="badge ${expense.type === 'RECEITA' ? 'badge-success' : 'badge-danger'}">
-                                                        ${expense.type}
+                                                    <span class="badge ${expense.type.toUpperCase() === 'RECEITA' ? 'badge-success' : 'badge-danger'}">
+                                                        ${expense.type.toUpperCase()}
                                                     </span>
                                                 </td>
                                                 <td>R$ ${parseFloat(expense.amount).toFixed(2)}</td>
@@ -900,6 +927,7 @@
                     </div>
                 `;
             } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
                 document.getElementById('dashboardContent').innerHTML = '<p>Erro ao carregar dados do dashboard</p>';
             }
         }
@@ -923,6 +951,7 @@
         async function loadCategories() {
             try {
                 const categories = await categoriesAPI.list();
+                
                 const categoriesContent = document.getElementById('categoriesContent');
 
                 if (categories.length > 0) {
@@ -941,13 +970,13 @@
                                         <tr>
                                             <td>${category.name}</td>
                                             <td>
-                                                <span class="badge ${category.type === 'RECEITA' ? 'badge-success' : 'badge-danger'}">
-                                                    ${category.type}
+                                                <span class="badge ${category.type.toUpperCase() === 'RECEITA' ? 'badge-success' : 'badge-danger'}">
+                                                    ${category.type.toUpperCase()}
                                                 </span>
                                             </td>
                                             <td>
                                                 <div class="action-buttons">
-                                                    <button class="btn btn-secondary" onclick="editCategory(${category.id}, '${category.name}', '${category.type}')">Editar</button>
+                                                    <button class="btn btn-secondary" onclick="editCategory(${category.id}, '${category.name}', '${category.type.toUpperCase()}')">Editar</button>
                                                     <button class="btn btn-danger" onclick="deleteCategory(${category.id})">Excluir</button>
                                                 </div>
                                             </td>
@@ -961,6 +990,7 @@
                     categoriesContent.innerHTML = '<div class="empty-state"><p>Nenhuma categoria cadastrada</p></div>';
                 }
             } catch (error) {
+                console.error('Erro ao carregar categorias:', error);
                 document.getElementById('categoriesContent').innerHTML = '<p>Erro ao carregar categorias</p>';
             }
         }
@@ -1072,15 +1102,16 @@
                                 </thead>
                                 <tbody>
                                     ${expenses.map(expense => {
-                                        const category = categories.find(c => c.id === expense.category_id);
+                                        const categoryName = getCategoryName(expense, categories);
+                                        
                                         return `
                                             <tr>
                                                 <td>${new Date(expense.date).toLocaleDateString('pt-BR')}</td>
                                                 <td>${expense.description}</td>
-                                                <td>${category?.name || 'Sem categoria'}</td>
+                                                <td>${categoryName}</td>
                                                 <td>
-                                                    <span class="badge ${expense.type === 'RECEITA' ? 'badge-success' : 'badge-danger'}">
-                                                        ${expense.type}
+                                                    <span class="badge ${expense.type.toUpperCase() === 'RECEITA' ? 'badge-success' : 'badge-danger'}">
+                                                        ${expense.type.toUpperCase()}
                                                     </span>
                                                 </td>
                                                 <td>R$ ${parseFloat(expense.amount).toFixed(2)}</td>
@@ -1104,92 +1135,136 @@
                 window.expensesData = expenses;
                 window.categoriesData = categories;
             } catch (error) {
+                console.error('Erro ao carregar expenses:', error);
                 document.getElementById('expensesContent').innerHTML = '<p>Erro ao carregar lançamentos</p>';
             }
         }
 
-        function showExpenseModal(expenseData = null) {
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div class="modal">
-                    <div class="modal-header">
-                        <h3>${expenseData ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
-                        <button class="close-btn">&times;</button>
+        async function showExpenseModal(expenseData = null) {
+            try {
+                // Mostrar loading
+                const loadingModal = document.createElement('div');
+                loadingModal.className = 'modal-overlay';
+                loadingModal.innerHTML = `
+                    <div class="modal">
+                        <div style="text-align: center; padding: 40px;">
+                            <p>Carregando categorias...</p>
+                        </div>
                     </div>
-                    <form id="expenseForm">
-                        <div class="form-group">
-                            <label>Descrição</label>
-                            <input type="text" id="expenseDescription" required value="${expenseData?.description || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label>Valor</label>
-                            <input type="number" step="0.01" id="expenseAmount" required value="${expenseData?.amount || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label>Tipo</label>
-                            <select id="expenseType">
-                                <option value="DESPESA" ${expenseData?.type === 'DESPESA' ? 'selected' : ''}>Despesa</option>
-                                <option value="RECEITA" ${expenseData?.type === 'RECEITA' ? 'selected' : ''}>Receita</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Categoria</label>
-                            <select id="expenseCategory" required>
-                                <option value="">Selecione...</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Data</label>
-                            <input type="date" id="expenseDate" required value="${expenseData?.date || ''}">
-                        </div>
-                        <button type="submit" class="btn">${expenseData ? 'Salvar' : 'Adicionar'}</button>
-                    </form>
-                </div>
-            `;
+                `;
+                document.body.appendChild(loadingModal);
 
-            document.body.appendChild(modal);
-
-            const typeSelect = document.getElementById('expenseType');
-            const categorySelect = document.getElementById('expenseCategory');
-
-            function updateCategories() {
-                const type = typeSelect.value;
-                const filteredCategories = (window.categoriesData || []).filter(c => c.type === type);
-                categorySelect.innerHTML = '<option value="">Selecione...</option>' +
-                    filteredCategories.map(c => `<option value="${c.id}" ${expenseData?.category_id === c.id ? 'selected' : ''}>${c.name}</option>`).join('');
-            }
-
-            typeSelect.addEventListener('change', updateCategories);
-            updateCategories();
-
-            modal.querySelector('.close-btn').addEventListener('click', () => modal.remove());
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.remove();
-            });
-
-            document.getElementById('expenseForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = {
-                    description: document.getElementById('expenseDescription').value,
-                    amount: parseFloat(document.getElementById('expenseAmount').value),
-                    category_id: parseInt(document.getElementById('expenseCategory').value),
-                    date: document.getElementById('expenseDate').value,
-                    type: document.getElementById('expenseType').value
-                };
-
-                try {
-                    if (expenseData) {
-                        await expensesAPI.update(expenseData.id, formData);
-                    } else {
-                        await expensesAPI.create(formData);
-                    }
-                    modal.remove();
-                    loadExpenses();
-                } catch (error) {
-                    alert('Erro ao salvar lançamento');
+                // Carregar categorias antes de abrir a modal
+                const categories = await categoriesAPI.list();
+                
+               
+                
+                // Remover loading
+                loadingModal.remove();
+                
+                if (!categories || categories.length === 0) {
+                    alert('Nenhuma categoria encontrada. Por favor, cadastre categorias primeiro.');
+                    return;
                 }
-            });
+                
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h3>${expenseData ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
+                            <button class="close-btn">&times;</button>
+                        </div>
+                        <form id="expenseForm">
+                            <div class="form-group">
+                                <label>Descrição</label>
+                                <input type="text" id="expenseDescription" required value="${expenseData?.description || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Valor</label>
+                                <input type="number" step="0.01" id="expenseAmount" required value="${expenseData?.amount || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <select id="expenseType">
+                                    <option value="DESPESA" ${!expenseData || expenseData?.type === 'DESPESA' ? 'selected' : ''}>Despesa</option>
+                                    <option value="RECEITA" ${expenseData?.type === 'RECEITA' ? 'selected' : ''}>Receita</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria</label>
+                                <select id="expenseCategory" required>
+                                    <option value="">Selecione...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Data</label>
+                                <input type="date" id="expenseDate" required value="${expenseData?.date || new Date().toISOString().split('T')[0]}">
+                            </div>
+                            <button type="submit" class="btn">${expenseData ? 'Salvar' : 'Adicionar'}</button>
+                        </form>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+
+                const typeSelect = document.getElementById('expenseType');
+                const categorySelect = document.getElementById('expenseCategory');
+
+                function updateCategories() {
+                    const type = typeSelect.value;
+
+                    // Filtrar comparando com minúsculas pois a API retorna 'despesa' e 'receita'
+                    const filteredCategories = categories.filter(c => c.type.toUpperCase() === type);
+       
+                    
+                    categorySelect.innerHTML = '<option value="">Selecione...</option>' +
+                        filteredCategories.map(c => {
+                            const selected = expenseData?.category_id == c.id ? 'selected' : '';
+                            return `<option value="${c.id}" ${selected}>${c.name}</option>`;
+                        }).join('');
+                    
+
+                }
+
+                typeSelect.addEventListener('change', updateCategories);
+                // Inicializar categorias
+                updateCategories();
+
+                modal.querySelector('.close-btn').addEventListener('click', () => modal.remove());
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.remove();
+                });
+
+                document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const formData = {
+                        description: document.getElementById('expenseDescription').value,
+                        amount: parseFloat(document.getElementById('expenseAmount').value),
+                        category_id: parseInt(document.getElementById('expenseCategory').value),
+                        date: document.getElementById('expenseDate').value,
+                        type: document.getElementById('expenseType').value
+                    };
+
+                    
+
+                    try {
+                        if (expenseData) {
+                            await expensesAPI.update(expenseData.id, formData);
+                        } else {
+                            await expensesAPI.create(formData);
+                        }
+                        modal.remove();
+                        loadExpenses();
+                    } catch (error) {
+                        console.error('Erro ao salvar:', error);
+                        alert('Erro ao salvar lançamento');
+                    }
+                });
+            } catch (error) {
+                console.error('Erro ao carregar categorias:', error);
+                alert('Erro ao carregar categorias. Tente novamente.');
+            }
         }
 
         window.editExpense = async (id) => {
@@ -1231,6 +1306,11 @@
                 ]);
 
                 const expensesContent = document.getElementById('fixedExpensesContent');
+                
+                if (!expensesContent) {
+                    console.error('Elemento fixedExpensesContent não encontrado');
+                    return;
+                }
 
                 if (fixedExpenses.length > 0) {
                     expensesContent.innerHTML = `
@@ -1247,11 +1327,12 @@
                                 </thead>
                                 <tbody>
                                     ${fixedExpenses.map(expense => {
-                                        const category = categories.find(c => c.id === expense.category_id);
+                                        const categoryName = getCategoryName(expense, categories);
+                                        
                                         return `
                                             <tr>
                                                 <td>${expense.description}</td>
-                                                <td>${category?.name || 'Sem categoria'}</td>
+                                                <td>${categoryName}</td>
                                                 <td>R$ ${parseFloat(expense.amount).toFixed(2)}</td>
                                                 <td>Dia ${expense.day_of_month}</td>
                                                 <td>
@@ -1274,74 +1355,117 @@
                 window.fixedExpensesData = fixedExpenses;
                 window.fixedCategoriesData = categories;
             } catch (error) {
-                document.getElementById('fixedExpensesContent').innerHTML = '<p>Erro ao carregar despesas fixas</p>';
+                console.error('Erro ao carregar despesas fixas:', error);
+                const expensesContent = document.getElementById('fixedExpensesContent');
+                if (expensesContent) {
+                    expensesContent.innerHTML = '<p>Erro ao carregar despesas fixas</p>';
+                }
             }
         }
 
-        function showFixedExpenseModal(expenseData = null) {
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div class="modal">
-                    <div class="modal-header">
-                        <h3>${expenseData ? 'Editar Despesa Fixa' : 'Nova Despesa Fixa'}</h3>
-                        <button class="close-btn">&times;</button>
+        async function showFixedExpenseModal(expenseData = null) {
+            try {
+                // Mostrar loading
+                const loadingModal = document.createElement('div');
+                loadingModal.className = 'modal-overlay';
+                loadingModal.innerHTML = `
+                    <div class="modal">
+                        <div style="text-align: center; padding: 40px;">
+                            <p>Carregando categorias...</p>
+                        </div>
                     </div>
-                    <form id="fixedExpenseForm">
-                        <div class="form-group">
-                            <label>Descrição</label>
-                            <input type="text" id="fixedExpenseDescription" required value="${expenseData?.description || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label>Valor</label>
-                            <input type="number" step="0.01" id="fixedExpenseAmount" required value="${expenseData?.amount || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label>Categoria</label>
-                            <select id="fixedExpenseCategory" required>
-                                <option value="">Selecione...</option>
-                                ${(window.fixedCategoriesData || []).filter(c => c.type === 'DESPESA').map(c => 
-                                    `<option value="${c.id}" ${expenseData?.category_id === c.id ? 'selected' : ''}>${c.name}</option>`
-                                ).join('')}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Dia do Mês (1-31)</label>
-                            <input type="number" min="1" max="31" id="fixedExpenseDay" required value="${expenseData?.day_of_month || ''}">
-                        </div>
-                        <button type="submit" class="btn">${expenseData ? 'Salvar' : 'Adicionar'}</button>
-                    </form>
-                </div>
-            `;
+                `;
+                document.body.appendChild(loadingModal);
 
-            document.body.appendChild(modal);
-
-            modal.querySelector('.close-btn').addEventListener('click', () => modal.remove());
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.remove();
-            });
-
-            document.getElementById('fixedExpenseForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = {
-                    description: document.getElementById('fixedExpenseDescription').value,
-                    amount: parseFloat(document.getElementById('fixedExpenseAmount').value),
-                    category_id: parseInt(document.getElementById('fixedExpenseCategory').value),
-                    day_of_month: parseInt(document.getElementById('fixedExpenseDay').value)
-                };
-
-                try {
-                    if (expenseData) {
-                        await fixedExpensesAPI.update(expenseData.id, formData);
-                    } else {
-                        await fixedExpensesAPI.create(formData);
-                    }
-                    modal.remove();
-                    loadFixedExpenses();
-                } catch (error) {
-                    alert('Erro ao salvar despesa fixa');
+                // Carregar categorias antes de abrir a modal
+                const categories = await categoriesAPI.list();
+                
+       
+                
+                // Remover loading
+                loadingModal.remove();
+                
+                // Filtrar categorias de despesa (comparar com maiúsculas pois a API retorna minúsculo)
+                const despesaCategories = categories.filter(c => c.type.toUpperCase() === 'DESPESA');
+                
+               
+                
+                if (despesaCategories.length === 0) {
+                    alert('Nenhuma categoria de despesa encontrada. Por favor, cadastre categorias de despesa primeiro.');
+                    return;
                 }
-            });
+                
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h3>${expenseData ? 'Editar Despesa Fixa' : 'Nova Despesa Fixa'}</h3>
+                            <button class="close-btn">&times;</button>
+                        </div>
+                        <form id="fixedExpenseForm">
+                            <div class="form-group">
+                                <label>Descrição</label>
+                                <input type="text" id="fixedExpenseDescription" required value="${expenseData?.description || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Valor</label>
+                                <input type="number" step="0.01" id="fixedExpenseAmount" required value="${expenseData?.amount || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria</label>
+                                <select id="fixedExpenseCategory" required>
+                                    <option value="">Selecione...</option>
+                                    ${despesaCategories.map(c => {
+                                        const selected = expenseData?.category_id == c.id ? 'selected' : '';
+                                        return `<option value="${c.id}" ${selected}>${c.name}</option>`;
+                                    }).join('')}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Dia do Mês (1-31)</label>
+                                <input type="number" min="1" max="31" id="fixedExpenseDay" required value="${expenseData?.day_of_month || ''}">
+                            </div>
+                            <button type="submit" class="btn">${expenseData ? 'Salvar' : 'Adicionar'}</button>
+                        </form>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+
+                modal.querySelector('.close-btn').addEventListener('click', () => modal.remove());
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.remove();
+                });
+
+                document.getElementById('fixedExpenseForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const formData = {
+                        description: document.getElementById('fixedExpenseDescription').value,
+                        amount: parseFloat(document.getElementById('fixedExpenseAmount').value),
+                        category_id: parseInt(document.getElementById('fixedExpenseCategory').value),
+                        day_of_month: parseInt(document.getElementById('fixedExpenseDay').value)
+                    };
+
+                  
+
+                    try {
+                        if (expenseData) {
+                            await fixedExpensesAPI.update(expenseData.id, formData);
+                        } else {
+                            await fixedExpensesAPI.create(formData);
+                        }
+                        modal.remove();
+                        loadFixedExpenses();
+                    } catch (error) {
+                        console.error('Erro ao salvar:', error);
+                        alert('Erro ao salvar despesa fixa');
+                    }
+                });
+            } catch (error) {
+                console.error('Erro ao carregar categorias:', error);
+                alert('Erro ao carregar categorias. Tente novamente.');
+            }
         }
 
         window.editFixedExpense = (id) => {
@@ -1459,6 +1583,7 @@
 
                 window.variableIncomesData = variableIncomes;
             } catch (error) {
+                console.error('Erro ao carregar receitas:', error);
                 document.getElementById('incomeContent').innerHTML = '<p>Erro ao carregar receitas</p>';
             }
         }
@@ -1558,7 +1683,6 @@
                 <div id="reportContent"></div>
             `;
 
-            // Carregar categorias no filtro
             try {
                 const categories = await categoriesAPI.list();
                 const categoryFilter = document.getElementById('categoryFilter');
@@ -1583,17 +1707,17 @@
             reportContent.innerHTML = '<div class="dashboard-card"><p>Gerando relatório...</p></div>';
 
             try {
-                const [expenses, categories, incomeData, variableIncomes] = await Promise.all([
+                const [expenses, categories, incomeData, variableIncomes, fixedExpenses] = await Promise.all([
                     expensesAPI.list(),
                     categoriesAPI.list(),
                     incomeAPI.get(),
-                    incomeAPI.listVariable()
+                    incomeAPI.listVariable(),
+                    fixedExpensesAPI.list()
                 ]);
 
                 const now = new Date();
                 let filteredExpenses = expenses;
 
-                // Filtrar por período
                 if (reportType === 'mensal') {
                     filteredExpenses = expenses.filter(e => {
                         const date = new Date(e.date);
@@ -1606,17 +1730,30 @@
                     });
                 }
 
-                // Filtrar por categoria
                 if (categoryFilter !== 'all') {
                     filteredExpenses = filteredExpenses.filter(e => e.category_id === parseInt(categoryFilter));
                 }
 
-                // Calcular totais
-                const totalExpenses = filteredExpenses.reduce((sum, e) => 
-                    e.type === 'DESPESA' ? sum + parseFloat(e.amount) : sum, 0);
+                // Calcular total de despesas dos lançamentos
+                const totalExpensesFromLancamentos = filteredExpenses.reduce((sum, e) => 
+                    e.type.toUpperCase() === 'DESPESA' ? sum + parseFloat(e.amount) : sum, 0);
+                
+                // Calcular total de despesas fixas (considerar apenas para relatório mensal)
+                let totalFixedExpenses = 0;
+                let fixedExpensesToShow = [];
+                
+                if (reportType === 'mensal') {
+                    totalFixedExpenses = fixedExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+                    fixedExpensesToShow = fixedExpenses;
+                }
+                
+                // Total de despesas = lançamentos + despesas fixas
+                const totalExpenses = totalExpensesFromLancamentos + totalFixedExpenses;
+                
+      
                 
                 const totalIncomeFromExpenses = filteredExpenses.reduce((sum, e) => 
-                    e.type === 'RECEITA' ? sum + parseFloat(e.amount) : sum, 0);
+                    e.type.toUpperCase() === 'RECEITA' ? sum + parseFloat(e.amount) : sum, 0);
 
                 const totalVariableIncome = variableIncomes.reduce((sum, v) => 
                     sum + parseFloat(v.amount), 0);
@@ -1628,7 +1765,6 @@
                     ? now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
                     : now.getFullYear();
 
-                // Renderizar relatório
                 reportContent.innerHTML = `
                     <div class="dashboard-card">
                         <h3>Relatório ${reportType === 'mensal' ? 'Mensal' : 'Anual'} - ${period}</h3>
@@ -1638,6 +1774,16 @@
                                 <h4>Receita Total</h4>
                                 <div class="value">R$ ${totalIncome.toFixed(2)}</div>
                             </div>
+                            <div class="stat-card">
+                                <h4>Despesas de Lançamentos</h4>
+                                <div class="value">R$ ${totalExpensesFromLancamentos.toFixed(2)}</div>
+                            </div>
+                            ${reportType === 'mensal' ? `
+                                <div class="stat-card">
+                                    <h4>Despesas Fixas</h4>
+                                    <div class="value">R$ ${totalFixedExpenses.toFixed(2)}</div>
+                                </div>
+                            ` : ''}
                             <div class="stat-card">
                                 <h4>Despesas Total</h4>
                                 <div class="value">R$ ${totalExpenses.toFixed(2)}</div>
@@ -1650,12 +1796,49 @@
                             </div>
                         </div>
 
+                        ${reportType === 'mensal' && fixedExpensesToShow.length > 0 ? `
+                            <div style="margin-bottom: 30px;">
+                                <h4 style="color: #333; margin-bottom: 15px;">Despesas Fixas do Mês</h4>
+                                <div class="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Descrição</th>
+                                                <th>Categoria</th>
+                                                <th>Valor</th>
+                                                <th>Dia do Mês</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${fixedExpensesToShow.map(expense => {
+                                                const categoryName = getCategoryName(expense, categories);
+                                                return `
+                                                    <tr>
+                                                        <td>${expense.description}</td>
+                                                        <td>${categoryName}</td>
+                                                        <td>R$ ${parseFloat(expense.amount).toFixed(2)}</td>
+                                                        <td>Dia ${expense.day_of_month}</td>
+                                                    </tr>
+                                                `;
+                                            }).join('')}
+                                            <tr style="font-weight: bold; background: #f8f9fa;">
+                                                <td colspan="2">Total Despesas Fixas</td>
+                                                <td>R$ ${totalFixedExpenses.toFixed(2)}</td>
+                                                <td></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        ` : ''}
+
                         <div class="action-buttons" style="margin-bottom: 20px;">
                             <button class="btn btn-success" id="downloadPdfBtn">Baixar PDF</button>
                             <button class="btn" id="sendEmailBtn">Enviar por Email</button>
                         </div>
 
                         ${filteredExpenses.length > 0 ? `
+                            <h4 style="color: #333; margin-bottom: 15px;">Lançamentos do Período</h4>
                             <div class="table-container">
                                 <table>
                                     <thead>
@@ -1669,15 +1852,16 @@
                                     </thead>
                                     <tbody>
                                         ${filteredExpenses.map(expense => {
-                                            const category = categories.find(c => c.id === expense.category_id);
+                                            const categoryName = getCategoryName(expense, categories);
+                                            
                                             return `
                                                 <tr>
                                                     <td>${new Date(expense.date).toLocaleDateString('pt-BR')}</td>
                                                     <td>${expense.description}</td>
-                                                    <td>${category?.name || 'Sem categoria'}</td>
+                                                    <td>${categoryName}</td>
                                                     <td>
-                                                        <span class="badge ${expense.type === 'RECEITA' ? 'badge-success' : 'badge-danger'}">
-                                                            ${expense.type}
+                                                        <span class="badge ${expense.type.toUpperCase() === 'RECEITA' ? 'badge-success' : 'badge-danger'}">
+                                                            ${expense.type.toUpperCase()}
                                                         </span>
                                                     </td>
                                                     <td>R$ ${parseFloat(expense.amount).toFixed(2)}</td>
@@ -1687,19 +1871,21 @@
                                     </tbody>
                                 </table>
                             </div>
-                        ` : '<div class="empty-state"><p>Nenhuma transação encontrada para este período</p></div>'}
+                        ` : '<div class="empty-state"><p>Nenhum lançamento encontrado para este período</p></div>'}
                     </div>
                 `;
 
-                // Event listeners para os botões
                 document.getElementById('downloadPdfBtn').addEventListener('click', () => {
                     downloadReportPDF({
                         period,
                         reportType,
                         totalIncome,
                         totalExpenses,
+                        totalExpensesFromLancamentos,
+                        totalFixedExpenses,
                         balance,
                         expenses: filteredExpenses,
+                        fixedExpenses: fixedExpensesToShow,
                         categories
                     });
                 });
@@ -1719,26 +1905,43 @@
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 
-                // Título
                 doc.setFontSize(20);
-                doc.text('Relatório Financeiro', 20, 20);
+                doc.text('Relatorio Financeiro', 20, 20);
                 
-                // Informações do relatório
                 doc.setFontSize(12);
-                doc.text(`Período: ${reportData.period}`, 20, 35);
+                doc.text(`Periodo: ${reportData.period}`, 20, 35);
                 doc.text(`Receita Total: R$ ${reportData.totalIncome.toFixed(2)}`, 20, 45);
                 doc.text(`Despesas Total: R$ ${reportData.totalExpenses.toFixed(2)}`, 20, 55);
                 doc.text(`Saldo: R$ ${reportData.balance.toFixed(2)}`, 20, 65);
                 
-                // Detalhamento
-                doc.text('Detalhamento:', 20, 80);
-                let y = 90;
+                let y = 80;
+                
+                if (reportData.fixedExpenses && reportData.fixedExpenses.length > 0) {
+                    doc.text('Despesas Fixas:', 20, y);
+                    y += 10;
+                    
+                    reportData.fixedExpenses.forEach(expense => {
+                        const categoryName = getCategoryName(expense, reportData.categories);
+                        const line = `${expense.description} (${categoryName}): R$ ${parseFloat(expense.amount).toFixed(2)}`;
+                        
+                        if (y > 280) {
+                            doc.addPage();
+                            y = 20;
+                        }
+                        doc.text(line, 20, y);
+                        y += 7;
+                    });
+                    
+                    y += 10;
+                }
+                
+                doc.text('Lancamentos:', 20, y);
+                y += 10;
                 
                 reportData.expenses.forEach(expense => {
-                    const category = reportData.categories.find(c => c.id === expense.category_id);
-                    const line = `${new Date(expense.date).toLocaleDateString('pt-BR')} - ${expense.description} (${category?.name || 'Sem categoria'}): R$ ${parseFloat(expense.amount).toFixed(2)}`;
+                    const categoryName = getCategoryName(expense, reportData.categories);
+                    const line = `${new Date(expense.date).toLocaleDateString('pt-BR')} - ${expense.description} (${categoryName}): R$ ${parseFloat(expense.amount).toFixed(2)}`;
                     
-                    // Quebra de linha se necessário
                     if (line.length > 80) {
                         const lines = doc.splitTextToSize(line, 170);
                         lines.forEach(l => {
@@ -1759,12 +1962,11 @@
                     }
                 });
                 
-                // Salvar PDF
                 doc.save(`relatorio-${reportData.reportType}-${Date.now()}.pdf`);
                 alert('PDF baixado com sucesso!');
             } catch (error) {
                 console.error('Erro ao gerar PDF:', error);
-                alert('Erro ao gerar PDF. Verifique se a biblioteca jsPDF está carregada.');
+                alert('Erro ao gerar PDF. Verifique se a biblioteca jsPDF esta carregada.');
             }
         }
 

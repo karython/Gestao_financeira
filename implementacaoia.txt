@@ -1,0 +1,1 @@
+vamos criar uma api com ia para receber um pdf do relatorio das financas que foi baixado, depois de carregar, a ia vai montar um plano de acao para pagamento de cada uma das dividas.
