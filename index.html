@@ -19,7 +19,7 @@
 
         // API Base URL
         const API_BASE = 'https://gestao-financeira-tmqc.onrender.com';
-
+0
         // API Helper Functions
         const apiRequest = async (endpoint, options = {}) => {
             const token = localStorage.getItem('token');
@@ -380,7 +380,10 @@
                         dashboardAPI.recentTransactions()
                     ]);
                     setStats({
-                        ...statsData,
+                        total_balance: parseFloat(statsData.total_balance),
+                        monthly_income: parseFloat(statsData.monthly_income),
+                        monthly_expenses: parseFloat(statsData.monthly_expenses),
+                        active_categories: statsData.active_categories,
                         recentTransactions: transactions
                     });
                 } catch (error) {
