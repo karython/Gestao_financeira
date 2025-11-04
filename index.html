@@ -4,24 +4,519 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestão Financeira Pessoal</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <link rel="stylesheet" href="static/css/styles.css"/>
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/7075/7075618.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+       html, body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* bloqueia completamente a barra */
+        }
+
+
+        /* Esconde a barra no Chrome, Edge e Safari */
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Esconde no Firefox */
+        body {
+            scrollbar-width: none;
+        }
+
+        /* Esconde no Internet Explorer e Edge antigo */
+        body {
+            -ms-overflow-style: none;
+        }
+        html {
+            scrollbar-width: none;       /* Firefox */
+            -ms-overflow-style: none;    /* IE e Edge antigo */
+        }
+
+        html::-webkit-scrollbar {
+            display: none;               /* Chrome, Edge, Safari */
+        }
+
+        body {
+            overflow-y: scroll;          /* permite rolar */
+        }
+
+
+        footer {
+            text-align: center;
+            background-color: white;
+        }
+
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-box h2 {
+            margin-bottom: 30px;
+            color: #333;
+            text-align: center;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+            background: #f5f7fa;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 0 20px 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .sidebar-header h2 {
+            font-size: 24px;
+        }
+
+        .menu-item {
+            width: 100%;
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            color: white;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 16px;
+        }
+
+        .menu-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .menu-item.active {
+            background: rgba(255,255,255,0.2);
+            border-left: 4px solid white;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 40px;
+            flex: 1;
+            width: calc(100% - 250px);
+        }
+
+        .hamburger {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: #667eea;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h4 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            color: #333;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .dashboard-card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .dashboard-card h3 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            color: #333;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-buttons .btn {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .modal-header h3 {
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-container select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            margin-top: 20px;
+        }
+
+        .simple-chart {
+            width: 100%;
+            height: 400px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+        }
+
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            width: 100%;
+            height: 100%;
+            gap: 10px;
+            padding: 20px 0;
+        }
+
+        .bar {
+            flex: 1;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            border-radius: 5px 5px 0 0;
+            position: relative;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding-top: 10px;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+        }
+
+        .bar-value {
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -25px;
+            color: #333;
+            font-size: 11px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 1000;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 80px 20px 20px;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .filter-container {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div id="app"></div>
 
-    <div id="root"></div>
+    <script>
+        const API_BASE = 'https://gestao-financeira-tmqc.onrender.com/api';
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-
-        // API Base URL
-        const API_BASE = 'https://gestao-financeira-tmqc.onrender.com';
-0
-        // API Helper Functions
-        const apiRequest = async (endpoint, options = {}) => {
+        // API Helper
+        async function apiRequest(endpoint, options = {}) {
             const token = localStorage.getItem('token');
             const headers = {
                 'Content-Type': 'application/json',
@@ -32,22 +527,27 @@
                 headers['Authorization'] = `Bearer ${token}`;
             }
 
-            const response = await fetch(`${API_BASE}${endpoint}`, {
-                ...options,
-                headers
-            });
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    ...options,
+                    headers
+                });
 
-            if (!response.ok) {
-                if (response.status === 401) {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('currentUser');
-                    window.location.reload();
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('currentUser');
+                        window.location.reload();
+                    }
+                    throw new Error(`API Error: ${response.status}`);
                 }
-                throw new Error(`API Error: ${response.status}`);
-            }
 
-            return response.json();
-        };
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
 
         // Auth API
         const authAPI = {
@@ -144,1170 +644,1121 @@
             recentTransactions: (limit = 10) => apiRequest(`/dashboard/recent-transactions/?limit=${limit}`)
         };
 
-        // Reports API
-        const reportsAPI = {
-            generate: (params) => {
-                const query = new URLSearchParams(params).toString();
-                return apiRequest(`/reports/generate/?${query}`);
+        // Helper function to find category name
+        function getCategoryName(expense, categories) {
+            let categoryName = 'Sem categoria';
+            
+            if (expense.category_id) {
+                const cat = categories.find(c => c.id === expense.category_id);
+                if (cat) return cat.name;
             }
-        };
-
-        // Analytics API
-        const analyticsAPI = {
-            summary: (month, year) => apiRequest(`/analytics/summary/?month=${month}&year=${year}`),
-            chartData: (filter, period, month, year) => {
-                const params = new URLSearchParams({ filter, period, year });
-                if (month) params.append('month', month);
-                return apiRequest(`/analytics/chart-data/?${params}`);
+            
+            if (expense.category_id) {
+                const cat = categories.find(c => c.id == expense.category_id);
+                if (cat) return cat.name;
             }
-        };
-
-        const App = () => {
-            const [isAuthenticated, setIsAuthenticated] = useState(false);
-            const [currentUser, setCurrentUser] = useState(null);
-            const [currentView, setCurrentView] = useState('dashboard');
-            const [sidebarOpen, setSidebarOpen] = useState(false);
-
-            useEffect(() => {
-                const user = localStorage.getItem('currentUser');
-                if (user) {
-                    setCurrentUser(JSON.parse(user));
-                    setIsAuthenticated(true);
+            
+            if (expense.category) {
+                if (typeof expense.category === 'object') {
+                    return expense.category.name || 'Sem categoria';
                 }
-            }, []);
-
-            const handleLogin = (userData) => {
-                localStorage.setItem('currentUser', JSON.stringify(userData));
-                setCurrentUser(userData);
-                setIsAuthenticated(true);
-            };
-
-            const handleLogout = () => {
-                localStorage.removeItem('currentUser');
-                setCurrentUser(null);
-                setIsAuthenticated(false);
-                setCurrentView('dashboard');
-            };
-
-            if (!isAuthenticated) {
-                return <LoginScreen onLogin={handleLogin} />;
+                return expense.category;
             }
+            
+            if (expense.categoryId) {
+                const cat = categories.find(c => c.id == expense.categoryId);
+                if (cat) return cat.name;
+            }
+            
+            return categoryName;
+        }
 
-            return (
-                <div className="app-container">
-                    <button className="hamburger" onClick={() => setSidebarOpen(!sidebarOpen)}>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
-                    
-                    <Sidebar 
-                        currentView={currentView} 
-                        setCurrentView={setCurrentView}
-                        onLogout={handleLogout}
-                        isOpen={sidebarOpen}
-                    />
-                    
-                    <div className="main-content">
-                        <MainContent 
-                            currentView={currentView}
-                            currentUser={currentUser}
-                            setCurrentUser={setCurrentUser}
-                        />
+        // App State
+        const state = {
+            isAuthenticated: false,
+            currentUser: null,
+            currentView: 'dashboard',
+            sidebarOpen: false
+        };
+
+        // Initialize App
+        function init() {
+            const user = localStorage.getItem('currentUser');
+            if (user) {
+                state.currentUser = JSON.parse(user);
+                state.isAuthenticated = true;
+                renderApp();
+            } else {
+                renderLogin();
+            }
+        }
+
+        // Render Login
+        function renderLogin() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="login-container">
+                    <div class="login-box">
+                        <h2 id="loginTitle">Login</h2>
+                        <form id="loginForm">
+                            <div class="form-group hidden" id="nameGroup">
+                                <label>Nome</label>
+                                <input type="text" id="name">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="email" required placeholder="example@gmail.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Senha</label>
+                                <input type="password" id="password" required placeholder="Digite sua senha...">
+                            </div>
+                            <div id="errorMessage" style="color: red; margin-bottom: 10px; display: none;"></div>
+                            <button type="submit" class="btn" style="width: 100%; margin-bottom: 15px;">
+                                <span id="submitText">Entrar</span>
+                            </button>
+                        </form>
+                        <button id="toggleMode" style="background: none; border: none; color: #667eea; cursor: pointer; width: 100%; text-align: center;">
+                            Não tem conta? Cadastre-se
+                        </button>
                     </div>
                 </div>
-            );
-        };
+            `;
 
-        const LoginScreen = ({ onLogin }) => {
-            const [isRegister, setIsRegister] = useState(false);
-            const [formData, setFormData] = useState({
-                name: '',
-                email: '',
-                password: ''
+            let isRegister = false;
+            const nameInput = document.getElementById('name');
+            
+            document.getElementById('toggleMode').addEventListener('click', () => {
+                isRegister = !isRegister;
+                document.getElementById('loginTitle').textContent = isRegister ? 'Cadastro' : 'Login';
+                document.getElementById('submitText').textContent = isRegister ? 'Cadastrar' : 'Entrar';
+                document.getElementById('toggleMode').textContent = isRegister ? 'Já tem conta? Faça login' : 'Não tem conta? Cadastre-se';
+                document.getElementById('nameGroup').classList.toggle('hidden', !isRegister);
+                
+                if (isRegister) {
+                    nameInput.setAttribute('required', '');
+                } else {
+                    nameInput.removeAttribute('required');
+                    nameInput.value = '';
+                }
             });
-            const [loading, setLoading] = useState(false);
-            const [error, setError] = useState('');
 
-            const handleSubmit = async (e) => {
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                setLoading(true);
-                setError('');
+                
+                const errorDiv = document.getElementById('errorMessage');
+                const nameInput = document.getElementById('name');
+                
+                if (isRegister && !nameInput.value.trim()) {
+                    errorDiv.textContent = 'Por favor, preencha o campo nome.';
+                    errorDiv.style.display = 'block';
+                    nameInput.focus();
+                    return;
+                }
+                
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const name = nameInput.value;
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+
+                submitBtn.disabled = true;
+                errorDiv.style.display = 'none';
 
                 try {
                     if (isRegister) {
-                        const response = await authAPI.register(formData);
-                        const loginResponse = await authAPI.login(formData.email, formData.password);
+                        await authAPI.register({ name, email, password });
+                        const loginResponse = await authAPI.login(email, password);
                         localStorage.setItem('token', loginResponse.access_token);
-                        onLogin({ ...response, token: loginResponse.access_token });
+                        const profile = await authAPI.getProfile();
+                        handleLogin({ ...profile, token: loginResponse.access_token });
                     } else {
-                        const response = await authAPI.login(formData.email, formData.password);
+                        const response = await authAPI.login(email, password);
                         localStorage.setItem('token', response.access_token);
                         const profile = await authAPI.getProfile();
-                        onLogin({ ...profile, token: response.access_token });
+                        handleLogin({ ...profile, token: response.access_token });
                     }
                 } catch (err) {
-                    setError('Erro no login/cadastro. Verifique suas credenciais.');
+                    errorDiv.textContent = 'Erro no login/cadastro. Verifique suas credenciais.';
+                    errorDiv.style.display = 'block';
                 } finally {
-                    setLoading(false);
+                    submitBtn.disabled = false;
                 }
-            };
+            });
+        }
 
-            return (
-                <div className="login-container">
-                    <div className="login-box">
-                        <h2>{isRegister ? 'Cadastro' : 'Login'}</h2>
-                        <form onSubmit={handleSubmit}>
-                            {isRegister && (
-                                <div className="form-group">
-                                    <label>Nome</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                    />
-                                </div>
-                            )}
-                            <div className="form-group">
-                                <label>Email</label>
-                                <input
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                    placeholder="Digite qualquer email para teste"
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Senha</label>
-                                <input
-                                    type="password"
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                                    placeholder="Digite qualquer senha para teste"
-                                />
-                            </div>
-                            {error && <div style={{color: 'red', marginBottom: '10px'}}>{error}</div>}
-                            <button type="submit" className="btn" style={{width: '100%', marginBottom: '15px'}} disabled={loading}>
-                                {loading ? 'Carregando...' : (isRegister ? 'Cadastrar' : 'Entrar')}
-                            </button>
-                        </form>
-                        <button
-                            onClick={() => setIsRegister(!isRegister)}
-                            style={{background: 'none', border: 'none', color: '#52dbf1', cursor: 'pointer', width: '100%', textAlign: 'center'}}
-                        >
-                            {isRegister ? 'Já tem conta? Faça login' : 'Não tem conta? Cadastre-se'}
-                        </button>
-                    </div>
-                </div>
-            );
-        };
+        function handleLogin(userData) {
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+            state.currentUser = userData;
+            state.isAuthenticated = true;
+            renderApp();
+        }
 
-        const Sidebar = ({ currentView, setCurrentView, onLogout, isOpen }) => {
-            const menuItems = [
-                { id: 'dashboard', label: 'Dashboard' },
-                { id: 'categories', label: 'Categorias' },
-                { id: 'expenses', label: 'Lançamentos' },
-                { id: 'fixedExpenses', label: 'Despesas Fixas' },
-                { id: 'income', label: 'Receitas' },
-                { id: 'reports', label: 'Relatórios' },
-                { id: 'analysis', label: 'Análises' },
-                { id: 'settings', label: 'Configurações' }
-            ];
+        function handleLogout() {
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('token');
+            state.currentUser = null;
+            state.isAuthenticated = false;
+            state.currentView = 'dashboard';
+            renderLogin();
+        }
 
-            return (
-                <div className={`sidebar ${isOpen ? 'active' : ''}`}>
-                    <div className="sidebar-header">
-                        <h2>FinControl</h2>
-                    </div>
-                    {menuItems.map(item => (
-                        <button
-                            key={item.id}
-                            className={`menu-item ${currentView === item.id ? 'active' : ''}`}
-                            onClick={() => setCurrentView(item.id)}
-                        >
-                            {item.label}
-                        </button>
-                    ))}
-                    <button className="menu-item" onClick={onLogout}>
-                        Sair
+        // Render App
+        function renderApp() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="app-container">
+                    <button class="hamburger" id="hamburger">
+                        <span></span>
+                        <span></span>
+                        <span></span>
                     </button>
+                    
+                    <div class="sidebar" id="sidebar">
+                        <div class="sidebar-header">
+                            <img src="https://cdn-icons-png.flaticon.com/512/817/817729.png" alt="Logo FinControl" width="100" height="100">
+                            <h2>FinControl</h2>
+                        </div>
+                        <button class="menu-item" data-view="dashboard">Dashboard</button>
+                        <button class="menu-item" data-view="categories">Categorias</button>
+                        <button class="menu-item" data-view="expenses">Lançamentos</button>
+                        <button class="menu-item" data-view="fixedExpenses">Despesas Fixas</button>
+                        <button class="menu-item" data-view="income">Receitas</button>
+                        <button class="menu-item" data-view="reports">Relatórios</button>
+                        <button class="menu-item" data-view="analysis">Análises</button>
+                        <button class="menu-item" data-view="settings">Configurações</button>
+                        <button class="menu-item" id="logoutBtn">Sair</button>
+                    </div>
+                    
+                    <div class="main-content" id="mainContent"></div>
                 </div>
-            );
-        };
+            `;
 
-        const MainContent = ({ currentView, currentUser, setCurrentUser }) => {
-            switch(currentView) {
+            document.getElementById('hamburger').addEventListener('click', () => {
+                state.sidebarOpen = !state.sidebarOpen;
+                document.getElementById('sidebar').classList.toggle('active', state.sidebarOpen);
+            });
+
+            document.querySelectorAll('.menu-item[data-view]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    state.currentView = btn.dataset.view;
+                    renderMainContent();
+                    updateActiveMenu();
+                    if (window.innerWidth <= 768) {
+                        state.sidebarOpen = false;
+                        document.getElementById('sidebar').classList.remove('active');
+                    }
+                });
+            });
+
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+
+            updateActiveMenu();
+            renderMainContent();
+        }
+
+        function updateActiveMenu() {
+            document.querySelectorAll('.menu-item[data-view]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === state.currentView);
+            });
+        }
+
+        function renderMainContent() {
+            const content = document.getElementById('mainContent');
+            
+            switch(state.currentView) {
                 case 'dashboard':
-                    return <Dashboard />;
+                    renderDashboard(content);
+                    break;
                 case 'categories':
-                    return <Categories />;
+                    renderCategories(content);
+                    break;
                 case 'expenses':
-                    return <Expenses />;
+                    renderExpenses(content);
+                    break;
                 case 'fixedExpenses':
-                    return <FixedExpenses />;
+                    renderFixedExpenses(content);
+                    break;
                 case 'income':
-                    return <Income />;
+                    renderIncome(content);
+                    break;
                 case 'reports':
-                    return <Reports />;
+                    renderReports(content);
+                    break;
                 case 'analysis':
-                    return <Analysis />;
+                    renderAnalysis(content);
+                    break;
                 case 'settings':
-                    return <Settings currentUser={currentUser} setCurrentUser={setCurrentUser} />;
-                default:
-                    return <Dashboard />;
+                    renderSettings(content);
+                    break;
             }
-        };
+        }
 
-        const Dashboard = () => {
-            const [stats, setStats] = useState({
-                total_balance: 0,
-                monthly_income: 0,
-                monthly_expenses: 0,
-                active_categories: 0,
-                recentTransactions: []
-            });
-            const [loading, setLoading] = useState(true);
+        // Dashboard
+        async function renderDashboard(content) {
+            content.innerHTML = `
+                <h1 style="color: #333; margin-bottom: 30px;">Dashboard</h1>
+                <div id="dashboardContent">Carregando...</div>
+            `;
 
-            useEffect(() => {
-                loadDashboardData();
-            }, []);
+            try {
+                const [statsData, transactions] = await Promise.all([
+                    dashboardAPI.stats(),
+                    dashboardAPI.recentTransactions()
+                ]);
 
-            const loadDashboardData = async () => {
-                try {
-                    const [statsData, transactions] = await Promise.all([
-                        dashboardAPI.stats(),
-                        dashboardAPI.recentTransactions()
-                    ]);
-                    setStats({
-                        total_balance: parseFloat(statsData.total_balance),
-                        monthly_income: parseFloat(statsData.monthly_income),
-                        monthly_expenses: parseFloat(statsData.monthly_expenses),
-                        active_categories: statsData.active_categories,
-                        recentTransactions: transactions
-                    });
-                } catch (error) {
-                    console.error('Erro ao carregar dados do dashboard:', error);
-                } finally {
-                    setLoading(false);
-                }
-            };
+                const stats = {
+                    total_balance: parseFloat(statsData.total_balance),
+                    monthly_income: parseFloat(statsData.monthly_income),
+                    monthly_expenses: parseFloat(statsData.monthly_expenses),
+                    active_categories: statsData.active_categories,
+                    recentTransactions: transactions
+                };
 
-            return (
-                <div>
-                    <h1 style={{color: '#333', marginBottom: '30px'}}>Dashboard</h1>
-                    
-                    {loading ? (
-                        <div>Carregando...</div>
-                    ) : (
-                        <div className="stats-grid">
-                            <div className="stat-card">
-                                <h4>Saldo Total</h4>
-                                <div className="value">R$ {stats.total_balance.toFixed(2)}</div>
-                            </div>
-                            <div className="stat-card">
-                                <h4>Receita Mensal</h4>
-                                <div className="value">R$ {stats.monthly_income.toFixed(2)}</div>
-                            </div>
-                            <div className="stat-card">
-                                <h4>Despesas Mensal</h4>
-                                <div className="value">R$ {stats.monthly_expenses.toFixed(2)}</div>
-                            </div>
-                            <div className="stat-card">
-                                <h4>Categorias Ativas</h4>
-                                <div className="value">{stats.active_categories}</div>
-                            </div>
+                const dashContent = document.getElementById('dashboardContent');
+                dashContent.innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h4>Saldo Total</h4>
+                            <div class="value">R$ ${stats.total_balance.toFixed(2)}</div>
                         </div>
-                    )}
-
-                    {!loading && (
-                        <div className="dashboard-card">
-                            <h3>Transações Recentes</h3>
-                            {stats.recentTransactions.length > 0 ? (
-                                <div className="table-container">
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Data</th>
-                                                <th>Descrição</th>
-                                                <th>Tipo</th>
-                                                <th>Valor</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {stats.recentTransactions.map(expense => (
-                                                <tr key={expense.id}>
-                                                    <td>{new Date(expense.date).toLocaleDateString('pt-BR')}</td>
-                                                    <td>{expense.description}</td>
-                                                    <td>
-                                                        <span className={`badge ${expense.type === 'RECEITA' ? 'badge-success' : 'badge-danger'}`}>
-                                                            {expense.type}
-                                                        </span>
-                                                    </td>
-                                                    <td>R$ {parseFloat(expense.amount).toFixed(2)}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ) : (
-                                <div className="empty-state">
-                                    <p>Nenhuma transação recente</p>
-                                </div>
-                            )}
+                        <div class="stat-card">
+                            <h4>Receita Mensal</h4>
+                            <div class="value">R$ ${stats.monthly_income.toFixed(2)}</div>
                         </div>
-                    )}
-                </div>
-            );
-        };
-
-        const Categories = () => {
-            const [categories, setCategories] = useState([]);
-            const [showModal, setShowModal] = useState(false);
-            const [editingCategory, setEditingCategory] = useState(null);
-            const [formData, setFormData] = useState({ name: '', type: 'despesa' });
-            const [loading, setLoading] = useState(true);
-
-            useEffect(() => {
-                loadCategories();
-            }, []);
-
-            const loadCategories = async () => {
-                try {
-                    const data = await categoriesAPI.list();
-                    setCategories(data);
-                } catch (error) {
-                    console.error('Erro ao carregar categorias:', error);
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                try {
-                    if (editingCategory) {
-                        await categoriesAPI.update(editingCategory.id, formData);
-                    } else {
-                        await categoriesAPI.create(formData);
-                    }
-                    loadCategories();
-                    handleCloseModal();
-                } catch (error) {
-                    console.error('Erro ao salvar categoria:', error);
-                    alert('Erro ao salvar categoria');
-                }
-            };
-
-            const handleDelete = async (id) => {
-                if (confirm('Tem certeza que deseja excluir esta categoria?')) {
-                    try {
-                        await categoriesAPI.delete(id);
-                        loadCategories();
-                    } catch (error) {
-                        console.error('Erro ao excluir categoria:', error);
-                        alert('Erro ao excluir categoria');
-                    }
-                }
-            };
-
-            const handleEdit = (category) => {
-                setEditingCategory(category);
-                setFormData({ name: category.name, type: category.type });
-                setShowModal(true);
-            };
-
-            const handleCloseModal = () => {
-                setShowModal(false);
-                setEditingCategory(null);
-                setFormData({ name: '', type: 'despesa' });
-            };
-
-            return (
-                <div>
-                    <h1 style={{color: '#333', marginBottom: '30px'}}>Categorias</h1>
-                    
-                    <button className="btn" onClick={() => setShowModal(true)} style={{marginBottom: '20px'}}>
-                        Nova Categoria
-                    </button>
-
-                    <div className="dashboard-card">
-                        <h3>Lista de Categorias</h3>
-                        {loading ? (
-                            <div>Carregando...</div>
-                        ) : categories.length > 0 ? (
-                            <div className="table-container">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Nome</th>
-                                            <th>Tipo</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {categories.map(category => (
-                                            <tr key={category.id}>
-                                                <td>{category.name}</td>
-                                                <td>
-                                                    <span className={`badge ${category.type === 'RECEITA' ? 'badge-success' : 'badge-danger'}`}>
-                                                        {category.type}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <div className="action-buttons">
-                                                        <button className="btn btn-secondary" onClick={() => handleEdit(category)}>
-                                                            Editar
-                                                        </button>
-                                                        <button className="btn btn-danger" onClick={() => handleDelete(category.id)}>
-                                                            Excluir
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="empty-state">
-                                <p>Nenhuma categoria cadastrada</p>
-                            </div>
-                        )}
+                        <div class="stat-card">
+                            <h4>Despesas Mensal</h4>
+                            <div class="value">R$ ${stats.monthly_expenses.toFixed(2)}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Categorias Ativas</h4>
+                            <div class="value">${stats.active_categories}</div>
+                        </div>
                     </div>
 
-                    {showModal && (
-                        <div className="modal-overlay" onClick={handleCloseModal}>
-                            <div className="modal" onClick={(e) => e.stopPropagation()}>
-                                <div className="modal-header">
-                                    <h3>{editingCategory ? 'Editar Categoria' : 'Nova Categoria'}</h3>
-                                    <button className="close-btn" onClick={handleCloseModal}>×</button>
-                                </div>
-                                <form onSubmit={handleSubmit}>
-                                    <div className="form-group">
-                                        <label>Nome da Categoria</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.name}
-                                            onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Tipo</label>
-                                        <select
-                                            value={formData.type}
-                                            onChange={(e) => setFormData({...formData, type: e.target.value})}
-                                        >
-                                            <option value="DESPESA">Despesa</option>
-                                            <option value="RECEITA">Receita</option>
-                                        </select>
-                                    </div>
-                                    <button type="submit" className="btn">
-                                        {editingCategory ? 'Salvar' : 'Adicionar'}
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        const Expenses = () => {
-            const [expenses, setExpenses] = useState([]);
-            const [categories, setCategories] = useState([]);
-            const [showModal, setShowModal] = useState(false);
-            const [editingExpense, setEditingExpense] = useState(null);
-            const [formData, setFormData] = useState({
-                description: '',
-                amount: '',
-                categoryId: '',
-                date: '',
-                type: 'DESPESA'
-            });
-            const [loading, setLoading] = useState(true);
-
-            useEffect(() => {
-                loadExpenses();
-                loadCategories();
-            }, []);
-
-            const loadExpenses = async () => {
-                try {
-                    const data = await expensesAPI.list();
-                    setExpenses(data);
-                } catch (error) {
-                    console.error('Erro ao carregar lançamentos:', error);
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            const loadCategories = async () => {
-                try {
-                    const data = await categoriesAPI.list();
-                    setCategories(data);
-                } catch (error) {
-                    console.error('Erro ao carregar categorias:', error);
-                }
-            };
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                try {
-                    const expenseData = {
-                        ...formData,
-                        amount: parseFloat(formData.amount),
-                        category_id: parseInt(formData.categoryId)
-                    };
-                    delete expenseData.categoryId;
-
-                    if (editingExpense) {
-                        await expensesAPI.update(editingExpense.id, expenseData);
-                    } else {
-                        await expensesAPI.create(expenseData);
-                    }
-                    loadExpenses();
-                    handleCloseModal();
-                } catch (error) {
-                    console.error('Erro ao salvar lançamento:', error);
-                    alert('Erro ao salvar lançamento');
-                }
-            };
-
-            const handleDelete = async (id) => {
-                if (confirm('Tem certeza que deseja excluir este lançamento?')) {
-                    try {
-                        await expensesAPI.delete(id);
-                        loadExpenses();
-                    } catch (error) {
-                        console.error('Erro ao excluir lançamento:', error);
-                        alert('Erro ao excluir lançamento');
-                    }
-                }
-            };
-
-            const handleEdit = (expense) => {
-                setEditingExpense(expense);
-                setFormData({
-                    description: expense.description,
-                    amount: expense.amount.toString(),
-                    categoryId: expense.category_id.toString(),
-                    date: expense.date,
-                    type: expense.type
-                });
-                setShowModal(true);
-            };
-
-            const handleCloseModal = () => {
-                setShowModal(false);
-                setEditingExpense(null);
-                setFormData({
-                    description: '',
-                    amount: '',
-                    categoryId: '',
-                    date: '',
-                    type: 'DESPESA'
-                });
-            };
-
-            return (
-                <div>
-                    <h1 style={{color: '#333', marginBottom: '30px'}}>Lançamentos</h1>
-                    
-                    <button className="btn" onClick={() => setShowModal(true)} style={{marginBottom: '20px'}}>
-                        Novo Lançamento
-                    </button>
-
-                    <div className="dashboard-card">
-                        <h3>Lista de Lançamentos</h3>
-                        {loading ? (
-                            <div>Carregando...</div>
-                        ) : expenses.length > 0 ? (
-                            <div className="table-container">
+                    <div class="dashboard-card">
+                        <h3>Transações Recentes</h3>
+                        ${stats.recentTransactions.length > 0 ? `
+                            <div class="table-container">
                                 <table>
                                     <thead>
                                         <tr>
                                             <th>Data</th>
                                             <th>Descrição</th>
-                                            <th>Categoria</th>
                                             <th>Tipo</th>
                                             <th>Valor</th>
-                                            <th>Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {expenses.map(expense => {
-                                            const category = categories.find(c => c.id === expense.category_id);
-                                            return (
-                                                <tr key={expense.id}>
-                                                    <td>{new Date(expense.date).toLocaleDateString('pt-BR')}</td>
-                                                    <td>{expense.description}</td>
-                                                    <td>{category?.name || 'Sem categoria'}</td>
-                                                    <td>
-                                                        <span className={`badge ${expense.type === 'RECEITA' ? 'badge-success' : 'badge-danger'}`}>
-                                                            {expense.type}
-                                                        </span>
-                                                    </td>
-                                                    <td>R$ {parseFloat(expense.amount).toFixed(2)}</td>
-                                                    <td>
-                                                        <div className="action-buttons">
-                                                            <button className="btn btn-secondary" onClick={() => handleEdit(expense)}>
-                                                                Editar
-                                                            </button>
-                                                            <button className="btn btn-danger" onClick={() => handleDelete(expense.id)}>
-                                                                Excluir
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="empty-state">
-                                <p>Nenhum lançamento cadastrado</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {showModal && (
-                        <div className="modal-overlay" onClick={handleCloseModal}>
-                            <div className="modal" onClick={(e) => e.stopPropagation()}>
-                                <div className="modal-header">
-                                    <h3>{editingExpense ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
-                                    <button className="close-btn" onClick={handleCloseModal}>×</button>
-                                </div>
-                                <form onSubmit={handleSubmit}>
-                                    <div className="form-group">
-                                        <label>Descrição</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.description}
-                                            onChange={(e) => setFormData({...formData, description: e.target.value})}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Valor</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            required
-                                            value={formData.amount}
-                                            onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Categoria</label>
-                                        <select
-                                            required
-                                            value={formData.categoryId}
-                                            onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
-                                        >
-                                            <option value="">Selecione...</option>
-                                            {categories.filter(c => c.type === formData.type).map(category => (
-                                                <option key={category.id} value={category.id}>
-                                                    {category.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Data</label>
-                                        <input
-                                            type="date"
-                                            required
-                                            value={formData.date}
-                                            onChange={(e) => setFormData({...formData, date: e.target.value})}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Tipo</label>
-                                        <select
-                                            value={formData.type}
-                                            onChange={(e) => setFormData({...formData, type: e.target.value})}
-                                        >
-                                            <option value="DESPESA">Despesa</option>
-                                            <option value="RECEITA">Receita</option>
-                                        </select>
-                                    </div>
-                                    <button type="submit" className="btn">
-                                        {editingExpense ? 'Salvar' : 'Adicionar'}
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        const FixedExpenses = () => {
-            const [fixedExpenses, setFixedExpenses] = useState([]);
-            const [categories, setCategories] = useState([]);
-            const [showModal, setShowModal] = useState(false);
-            const [editingExpense, setEditingExpense] = useState(null);
-            const [formData, setFormData] = useState({
-                description: '',
-                amount: '',
-                category_id: '',
-                day_of_month: ''
-            });
-            const [loading, setLoading] = useState(true);
-
-            useEffect(() => {
-                loadFixedExpenses();
-                loadCategories();
-            }, []);
-
-            const loadFixedExpenses = async () => {
-                try {
-                    const data = await fixedExpensesAPI.list();
-                    setFixedExpenses(data);
-                } catch (error) {
-                    console.error('Erro ao carregar despesas fixas:', error);
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            const loadCategories = async () => {
-                try {
-                    const data = await categoriesAPI.list();
-                    setCategories(data.filter(c => c.type === 'DESPESA'));
-                } catch (error) {
-                    console.error('Erro ao carregar categorias:', error);
-                }
-            };
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                try {
-                    const expenseData = {
-                        ...formData,
-                        amount: parseFloat(formData.amount),
-                        category_id: parseInt(formData.category_id),
-                        day_of_month: parseInt(formData.day_of_month)
-                    };
-                    delete expenseData.categoryId;
-                    delete expenseData.dayOfMonth;
-
-                    if (editingExpense) {
-                        await fixedExpensesAPI.update(editingExpense.id, expenseData);
-                    } else {
-                        await fixedExpensesAPI.create(expenseData);
-                    }
-                    loadFixedExpenses();
-                    handleCloseModal();
-                } catch (error) {
-                    console.error('Erro ao salvar despesa fixa:', error);
-                    alert('Erro ao salvar despesa fixa');
-                }
-            };
-
-            const handleDelete = async (id) => {
-                if (confirm('Tem certeza que deseja excluir esta despesa fixa?')) {
-                    try {
-                        await fixedExpensesAPI.delete(id);
-                        loadFixedExpenses();
-                    } catch (error) {
-                        console.error('Erro ao excluir despesa fixa:', error);
-                        alert('Erro ao excluir despesa fixa');
-                    }
-                }
-            };
-
-            const handleEdit = (expense) => {
-                setEditingExpense(expense);
-                setFormData({
-                    description: expense.description,
-                    amount: expense.amount.toString(),
-                    category_id: expense.category_id.toString(),
-                    day_of_month: expense.day_of_month.toString()
-                });
-                setShowModal(true);
-            };
-
-            const handleCloseModal = () => {
-                setShowModal(false);
-                setEditingExpense(null);
-                setFormData({
-                    description: '',
-                    amount: '',
-                    category_id: '',
-                    day_of_month: ''
-                });
-            };
-
-            return (
-                <div>
-                    <h1 style={{color: '#333', marginBottom: '30px'}}>Despesas Fixas</h1>
-                    
-                    <button className="btn" onClick={() => setShowModal(true)} style={{marginBottom: '20px'}}>
-                        Nova Despesa Fixa
-                    </button>
-
-                    <div className="dashboard-card">
-                        <h3>Lista de Despesas Fixas</h3>
-                        {loading ? (
-                            <div>Carregando...</div>
-                        ) : fixedExpenses.length > 0 ? (
-                            <div className="table-container">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Descrição</th>
-                                            <th>Categoria</th>
-                                            <th>Valor</th>
-                                            <th>Dia do Mês</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {fixedExpenses.map(expense => {
-                                            const category = categories.find(c => c.id === expense.category_id);
-                                            return (
-                                                <tr key={expense.id}>
-                                                    <td>{expense.description}</td>
-                                                    <td>{category?.name || 'Sem categoria'}</td>
-                                                    <td>R$ {parseFloat(expense.amount).toFixed(2)}</td>
-                                                    <td>Dia {expense.day_of_month}</td>
-                                                    <td>
-                                                        <div className="action-buttons">
-                                                            <button className="btn btn-secondary" onClick={() => handleEdit(expense)}>
-                                                                Editar
-                                                            </button>
-                                                            <button className="btn btn-danger" onClick={() => handleDelete(expense.id)}>
-                                                                Excluir
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="empty-state">
-                                <p>Nenhuma despesa fixa cadastrada</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {showModal && (
-                        <div className="modal-overlay" onClick={handleCloseModal}>
-                            <div className="modal" onClick={(e) => e.stopPropagation()}>
-                                <div className="modal-header">
-                                    <h3>{editingExpense ? 'Editar Despesa Fixa' : 'Nova Despesa Fixa'}</h3>
-                                    <button className="close-btn" onClick={handleCloseModal}>×</button>
-                                </div>
-                                <form onSubmit={handleSubmit}>
-                                    <div className="form-group">
-                                        <label>Descrição</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.description}
-                                            onChange={(e) => setFormData({...formData, description: e.target.value})}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Valor</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            required
-                                            value={formData.amount}
-                                            onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Categoria</label>
-                                        <select
-                                            required
-                                            value={formData.category_id}
-                                            onChange={(e) => setFormData({...formData, category_id: e.target.value})}
-                                        >
-                                            <option value="">Selecione...</option>
-                                            {categories.map(category => (
-                                                <option key={category.id} value={category.id}>
-                                                    {category.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Dia do Mês (1-31)</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            max="31"
-                                            required
-                                            value={formData.day_of_month}
-                                            onChange={(e) => setFormData({...formData, day_of_month: e.target.value})}
-                                        />
-                                    </div>
-                                    <button type="submit" className="btn">
-                                        {editingExpense ? 'Salvar' : 'Adicionar'}
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        const Income = () => {
-            const [income, setIncome] = useState({
-                fixed_amount: 0,
-                bonus_amount: 0
-            });
-            const [variableIncomes, setVariableIncomes] = useState([]);
-            const [showVariableModal, setShowVariableModal] = useState(false);
-            const [editingVariable, setEditingVariable] = useState(null);
-            const [variableForm, setVariableForm] = useState({
-                description: '',
-                amount: '',
-                valid_until: '',
-                is_active: true
-            });
-            const [loading, setLoading] = useState(true);
-
-            useEffect(() => {
-                loadIncome();
-            }, []);
-
-            const loadIncome = async () => {
-                try {
-                    const [incomeData, variableData] = await Promise.all([
-                        incomeAPI.get(),
-                        incomeAPI.listVariable()
-                    ]);
-                    setIncome(incomeData);
-                    setVariableIncomes(variableData);
-                } catch (error) {
-                    console.error('Erro ao carregar receitas:', error);
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            const handleFixedChange = async (value) => {
-                try {
-                    await incomeAPI.update({
-                        fixed_amount: parseFloat(value) || 0,
-                        bonus_amount: income.bonus_amount
-                    });
-                    setIncome(prev => ({ ...prev, fixed_amount: parseFloat(value) || 0 }));
-                } catch (error) {
-                    console.error('Erro ao atualizar receita fixa:', error);
-                    alert('Erro ao atualizar receita fixa');
-                }
-            };
-
-            const handleVariableSubmit = async (e) => {
-                e.preventDefault();
-                try {
-                    const variableData = {
-                        ...variableForm,
-                        amount: parseFloat(variableForm.amount)
-                    };
-                    delete variableData.validUntil;
-
-                    if (editingVariable) {
-                        await incomeAPI.updateVariable(editingVariable.id, variableData);
-                    } else {
-                        await incomeAPI.createVariable(variableData);
-                    }
-                    loadIncome();
-                    handleCloseVariableModal();
-                } catch (error) {
-                    console.error('Erro ao salvar receita variável:', error);
-                    alert('Erro ao salvar receita variável');
-                }
-            };
-
-            const handleDeleteVariable = async (id) => {
-                if (confirm('Tem certeza que deseja excluir esta receita variável?')) {
-                    try {
-                        await incomeAPI.deleteVariable(id);
-                        loadIncome();
-                    } catch (error) {
-                        console.error('Erro ao excluir receita variável:', error);
-                        alert('Erro ao excluir receita variável');
-                    }
-                }
-            };
-
-            const handleEditVariable = (variable) => {
-                setEditingVariable(variable);
-                setVariableForm({
-                    description: variable.description,
-                    amount: variable.amount.toString(),
-                    valid_until: variable.valid_until,
-                    is_active: variable.is_active
-                });
-                setShowVariableModal(true);
-            };
-
-            const handleCloseVariableModal = () => {
-                setShowVariableModal(false);
-                setEditingVariable(null);
-                setVariableForm({
-                    description: '',
-                    amount: '',
-                    valid_until: '',
-                    is_active: true
-                });
-            };
-
-            if (loading) {
-                return <div>Carregando...</div>;
-            }
-
-
-
-            return (
-                <div>
-                    <h1 style={{color: '#333', marginBottom: '30px'}}>Receitas</h1>
-                    
-                    <div className="stats-grid">
-                        <div className="stat-card">
-                            <h4>Receita Total Líquida</h4>
-                            <div className="value">R$ {(income.fixed_amount + variableIncomes.reduce((sum, v) => sum + parseFloat(v.amount), 0)).toFixed(2)}</div>
-                        </div>
-                    </div>
-
-                    <div className="dashboard-card">
-                        <h3>Receita Mensal Fixa</h3>
-                        <div className="form-group">
-                            <label>Valor Fixo Mensal</label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                value={income.fixed_amount}
-                                onChange={(e) => handleFixedChange(e.target.value)}
-                                placeholder="0.00"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="dashboard-card">
-                        <h3>Receitas Variáveis</h3>
-                        <button className="btn" onClick={() => setShowVariableModal(true)} style={{marginBottom: '20px'}}>
-                            Adicionar Receita Variável
-                        </button>
-                        
-                        {variableIncomes.length > 0 ? (
-                            <div className="table-container">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Descrição</th>
-                                            <th>Valor</th>
-                                            <th>Válido Até</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {variableIncomes.map(variable => (
-                                            <tr key={variable.id}>
-                                                <td>{variable.description}</td>
-                                                <td>R$ {parseFloat(variable.amount).toFixed(2)}</td>
-                                                <td>{variable.valid_until ? new Date(variable.valid_until).toLocaleDateString('pt-BR') : 'Indefinido'}</td>
+                                        ${stats.recentTransactions.map(expense => `
+                                            <tr>
+                                                <td>${new Date(expense.date).toLocaleDateString('pt-BR')}</td>
+                                                <td>${expense.description}</td>
                                                 <td>
-                                                    <div className="action-buttons">
-                                                        <button className="btn btn-secondary" onClick={() => handleEditVariable(variable)}>
-                                                            Editar
-                                                        </button>
-                                                        <button className="btn btn-danger" onClick={() => handleDeleteVariable(variable.id)}>
-                                                            Excluir
-                                                        </button>
+                                                    <span class="badge ${expense.type.toUpperCase() === 'RECEITA' ? 'badge-success' : 'badge-danger'}">
+                                                        ${expense.type.toUpperCase()}
+                                                    </span>
+                                                </td>
+                                                <td>R$ ${parseFloat(expense.amount).toFixed(2)}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : '<div class="empty-state"><p>Nenhuma transação recente</p></div>'}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
+                document.getElementById('dashboardContent').innerHTML = '<p>Erro ao carregar dados do dashboard</p>';
+            }
+        }
+
+        // Categories
+        async function renderCategories(content) {
+            content.innerHTML = `
+                <h1 style="color: #333; margin-bottom: 30px;">Categorias</h1>
+                <button class="btn" id="newCategoryBtn" style="margin-bottom: 20px;">Nova Categoria</button>
+                <div class="dashboard-card">
+                    <h3>Lista de Categorias</h3>
+                    <div id="categoriesContent">Carregando...</div>
+                </div>
+            `;
+
+            document.getElementById('newCategoryBtn').addEventListener('click', () => showCategoryModal());
+
+            loadCategories();
+        }
+
+        async function loadCategories() {
+            try {
+                const categories = await categoriesAPI.list();
+                
+                const categoriesContent = document.getElementById('categoriesContent');
+
+                if (categories.length > 0) {
+                    categoriesContent.innerHTML = `
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Tipo</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${categories.map(category => `
+                                        <tr>
+                                            <td>${category.name}</td>
+                                            <td>
+                                                <span class="badge ${category.type.toUpperCase() === 'RECEITA' ? 'badge-success' : 'badge-danger'}">
+                                                    ${category.type.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <button class="btn btn-secondary" onclick="editCategory(${category.id}, '${category.name}', '${category.type.toUpperCase()}')">Editar</button>
+                                                    <button class="btn btn-danger" onclick="deleteCategory(${category.id})">Excluir</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                } else {
+                    categoriesContent.innerHTML = '<div class="empty-state"><p>Nenhuma categoria cadastrada</p></div>';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar categorias:', error);
+                document.getElementById('categoriesContent').innerHTML = '<p>Erro ao carregar categorias</p>';
+            }
+        }
+
+        function showCategoryModal(id = null, name = '', type = 'DESPESA') {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3>${id ? 'Editar Categoria' : 'Nova Categoria'}</h3>
+                        <button class="close-btn">&times;</button>
+                    </div>
+                    <form id="categoryForm">
+                        <div class="form-group">
+                            <label>Nome da Categoria</label>
+                            <input type="text" id="categoryName" required value="${name}">
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo</label>
+                            <select id="categoryType">
+                                <option value="DESPESA" ${type === 'DESPESA' ? 'selected' : ''}>Despesa</option>
+                                <option value="RECEITA" ${type === 'RECEITA' ? 'selected' : ''}>Receita</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn">${id ? 'Salvar' : 'Adicionar'}</button>
+                    </form>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            modal.querySelector('.close-btn').addEventListener('click', () => modal.remove());
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+
+            document.getElementById('categoryForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = {
+                    name: document.getElementById('categoryName').value,
+                    type: document.getElementById('categoryType').value
+                };
+
+                try {
+                    if (id) {
+                        await categoriesAPI.update(id, formData);
+                    } else {
+                        await categoriesAPI.create(formData);
+                    }
+                    modal.remove();
+                    loadCategories();
+                } catch (error) {
+                    alert('Erro ao salvar categoria');
+                }
+            });
+        }
+
+        window.editCategory = (id, name, type) => showCategoryModal(id, name, type);
+
+        window.deleteCategory = async (id) => {
+            if (confirm('Tem certeza que deseja excluir esta categoria?')) {
+                try {
+                    await categoriesAPI.delete(id);
+                    loadCategories();
+                } catch (error) {
+                    alert('Erro ao excluir categoria');
+                }
+            }
+        };
+
+        // Expenses
+        async function renderExpenses(content) {
+            content.innerHTML = `
+                <h1 style="color: #333; margin-bottom: 30px;">Lançamentos</h1>
+                <button class="btn" id="newExpenseBtn" style="margin-bottom: 20px;">Novo Lançamento</button>
+                <div class="dashboard-card">
+                    <h3>Lista de Lançamentos</h3>
+                    <div id="expensesContent">Carregando...</div>
+                </div>
+            `;
+
+            document.getElementById('newExpenseBtn').addEventListener('click', () => showExpenseModal());
+            loadExpenses();
+        }
+
+        async function loadExpenses() {
+            try {
+                const [expenses, categories] = await Promise.all([
+                    expensesAPI.list(),
+                    categoriesAPI.list()
+                ]);
+
+                const expensesContent = document.getElementById('expensesContent');
+
+                if (expenses.length > 0) {
+                    expensesContent.innerHTML = `
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Descrição</th>
+                                        <th>Categoria</th>
+                                        <th>Tipo</th>
+                                        <th>Valor</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${expenses.map(expense => {
+                                        const categoryName = getCategoryName(expense, categories);
+                                        
+                                        return `
+                                            <tr>
+                                                <td>${new Date(expense.date).toLocaleDateString('pt-BR')}</td>
+                                                <td>${expense.description}</td>
+                                                <td>${categoryName}</td>
+                                                <td>
+                                                    <span class="badge ${expense.type.toUpperCase() === 'RECEITA' ? 'badge-success' : 'badge-danger'}">
+                                                        ${expense.type.toUpperCase()}
+                                                    </span>
+                                                </td>
+                                                <td>R$ ${parseFloat(expense.amount).toFixed(2)}</td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <button class="btn btn-secondary" onclick="editExpense(${expense.id})">Editar</button>
+                                                        <button class="btn btn-danger" onclick="deleteExpense(${expense.id})">Excluir</button>
                                                     </div>
                                                 </td>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="empty-state">
-                                <p>Nenhuma receita variável cadastrada</p>
-                            </div>
-                        )}
-                    </div>
-
-
-                    {showVariableModal && (
-                        <div className="modal-overlay" onClick={handleCloseVariableModal}>
-                            <div className="modal" onClick={(e) => e.stopPropagation()}>
-                                <div className="modal-header">
-                                    <h3>{editingVariable ? 'Editar Receita Variável' : 'Nova Receita Variável'}</h3>
-                                    <button className="close-btn" onClick={handleCloseVariableModal}>×</button>
-                                </div>
-                                <form onSubmit={handleVariableSubmit}>
-                                    <div className="form-group">
-                                        <label>Descrição</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={variableForm.description}
-                                            onChange={(e) => setVariableForm({...variableForm, description: e.target.value})}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Valor</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            required
-                                            value={variableForm.amount}
-                                            onChange={(e) => setVariableForm({...variableForm, amount: e.target.value})}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Válido Até</label>
-                                        <input
-                                            type="date"
-                                            value={variableForm.valid_until}
-                                            onChange={(e) => setVariableForm({...variableForm, valid_until: e.target.value})}
-                                        />
-                                    </div>
-                                    <button type="submit" className="btn">
-                                        {editingVariable ? 'Salvar' : 'Adicionar'}
-                                    </button>
-                                </form>
-                            </div>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
                         </div>
-                    )}
-                </div>
-            );
+                    `;
+                } else {
+                    expensesContent.innerHTML = '<div class="empty-state"><p>Nenhum lançamento cadastrado</p></div>';
+                }
+
+                window.expensesData = expenses;
+                window.categoriesData = categories;
+            } catch (error) {
+                console.error('Erro ao carregar expenses:', error);
+                document.getElementById('expensesContent').innerHTML = '<p>Erro ao carregar lançamentos</p>';
+            }
+        }
+
+        async function showExpenseModal(expenseData = null) {
+            try {
+                // Mostrar loading
+                const loadingModal = document.createElement('div');
+                loadingModal.className = 'modal-overlay';
+                loadingModal.innerHTML = `
+                    <div class="modal">
+                        <div style="text-align: center; padding: 40px;">
+                            <p>Carregando categorias...</p>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(loadingModal);
+
+                // Carregar categorias antes de abrir a modal
+                const categories = await categoriesAPI.list();
+                
+               
+                
+                // Remover loading
+                loadingModal.remove();
+                
+                if (!categories || categories.length === 0) {
+                    alert('Nenhuma categoria encontrada. Por favor, cadastre categorias primeiro.');
+                    return;
+                }
+                
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h3>${expenseData ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
+                            <button class="close-btn">&times;</button>
+                        </div>
+                        <form id="expenseForm">
+                            <div class="form-group">
+                                <label>Descrição</label>
+                                <input type="text" id="expenseDescription" required value="${expenseData?.description || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Valor</label>
+                                <input type="number" step="0.01" id="expenseAmount" required value="${expenseData?.amount || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <select id="expenseType">
+                                    <option value="DESPESA" ${!expenseData || expenseData?.type === 'DESPESA' ? 'selected' : ''}>Despesa</option>
+                                    <option value="RECEITA" ${expenseData?.type === 'RECEITA' ? 'selected' : ''}>Receita</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria</label>
+                                <select id="expenseCategory" required>
+                                    <option value="">Selecione...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Data</label>
+                                <input type="date" id="expenseDate" required value="${expenseData?.date || new Date().toISOString().split('T')[0]}">
+                            </div>
+                            <button type="submit" class="btn">${expenseData ? 'Salvar' : 'Adicionar'}</button>
+                        </form>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+
+                const typeSelect = document.getElementById('expenseType');
+                const categorySelect = document.getElementById('expenseCategory');
+
+                function updateCategories() {
+                    const type = typeSelect.value;
+
+                    // Filtrar comparando com minúsculas pois a API retorna 'despesa' e 'receita'
+                    const filteredCategories = categories.filter(c => c.type.toUpperCase() === type);
+       
+                    
+                    categorySelect.innerHTML = '<option value="">Selecione...</option>' +
+                        filteredCategories.map(c => {
+                            const selected = expenseData?.category_id == c.id ? 'selected' : '';
+                            return `<option value="${c.id}" ${selected}>${c.name}</option>`;
+                        }).join('');
+                    
+
+                }
+
+                typeSelect.addEventListener('change', updateCategories);
+                // Inicializar categorias
+                updateCategories();
+
+                modal.querySelector('.close-btn').addEventListener('click', () => modal.remove());
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.remove();
+                });
+
+                document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const formData = {
+                        description: document.getElementById('expenseDescription').value,
+                        amount: parseFloat(document.getElementById('expenseAmount').value),
+                        category_id: parseInt(document.getElementById('expenseCategory').value),
+                        date: document.getElementById('expenseDate').value,
+                        type: document.getElementById('expenseType').value.toLowerCase()
+                    };
+
+                    
+
+                    try {
+                        if (expenseData) {
+                            await expensesAPI.update(expenseData.id, formData);
+                        } else {
+                            await expensesAPI.create(formData);
+                        }
+                        modal.remove();
+                        loadExpenses();
+                    } catch (error) {
+                        console.error('Erro ao salvar:', error);
+                        alert('Erro ao salvar lançamento');
+                    }
+                });
+            } catch (error) {
+                console.error('Erro ao carregar categorias:', error);
+                alert('Erro ao carregar categorias. Tente novamente.');
+            }
+        }
+
+        window.editExpense = async (id) => {
+            const expense = window.expensesData.find(e => e.id === id);
+            if (expense) showExpenseModal(expense);
         };
 
-        const Reports = () => {
-            const [reportType, setReportType] = useState('mensal');
-            const [categoryFilter, setCategoryFilter] = useState('all');
-            const [categories, setCategories] = useState([]);
-            const [reportData, setReportData] = useState(null);
+        window.deleteExpense = async (id) => {
+            if (confirm('Tem certeza que deseja excluir este lançamento?')) {
+                try {
+                    await expensesAPI.delete(id);
+                    loadExpenses();
+                } catch (error) {
+                    alert('Erro ao excluir lançamento');
+                }
+            }
+        };
 
-            useEffect(() => {
-                const cats = JSON.parse(localStorage.getItem('categories') || '[]');
-                setCategories(cats);
-            }, []);
+        // Fixed Expenses
+        async function renderFixedExpenses(content) {
+            content.innerHTML = `
+                <h1 style="color: #333; margin-bottom: 30px;">Despesas Fixas</h1>
+                <button class="btn" id="newFixedExpenseBtn" style="margin-bottom: 20px;">Nova Despesa Fixa</button>
+                <div class="dashboard-card">
+                    <h3>Lista de Despesas Fixas</h3>
+                    <div id="fixedExpensesContent">Carregando...</div>
+                </div>
+            `;
 
-            const generateReport = () => {
-                const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
-                const income = JSON.parse(localStorage.getItem('income') || '{}');
+            document.getElementById('newFixedExpenseBtn').addEventListener('click', () => showFixedExpenseModal());
+            loadFixedExpenses();
+        }
+
+        async function loadFixedExpenses() {
+            try {
+                const [fixedExpenses, categories] = await Promise.all([
+                    fixedExpensesAPI.list(),
+                    categoriesAPI.list()
+                ]);
+
+                const expensesContent = document.getElementById('fixedExpensesContent');
                 
+                if (!expensesContent) {
+                    console.error('Elemento fixedExpensesContent não encontrado');
+                    return;
+                }
+
+                if (fixedExpenses.length > 0) {
+                    expensesContent.innerHTML = `
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Descrição</th>
+                                        <th>Categoria</th>
+                                        <th>Valor</th>
+                                        <th>Dia do Mês</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${fixedExpenses.map(expense => {
+                                        const categoryName = getCategoryName(expense, categories);
+                                        
+                                        return `
+                                            <tr>
+                                                <td>${expense.description}</td>
+                                                <td>${categoryName}</td>
+                                                <td>R$ ${parseFloat(expense.amount).toFixed(2)}</td>
+                                                <td>Dia ${expense.day_of_month}</td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <button class="btn btn-secondary" onclick="editFixedExpense(${expense.id})">Editar</button>
+                                                        <button class="btn btn-danger" onclick="deleteFixedExpense(${expense.id})">Excluir</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                } else {
+                    expensesContent.innerHTML = '<div class="empty-state"><p>Nenhuma despesa fixa cadastrada</p></div>';
+                }
+
+                window.fixedExpensesData = fixedExpenses;
+                window.fixedCategoriesData = categories;
+            } catch (error) {
+                console.error('Erro ao carregar despesas fixas:', error);
+                const expensesContent = document.getElementById('fixedExpensesContent');
+                if (expensesContent) {
+                    expensesContent.innerHTML = '<p>Erro ao carregar despesas fixas</p>';
+                }
+            }
+        }
+
+        async function showFixedExpenseModal(expenseData = null) {
+            try {
+                // Mostrar loading
+                const loadingModal = document.createElement('div');
+                loadingModal.className = 'modal-overlay';
+                loadingModal.innerHTML = `
+                    <div class="modal">
+                        <div style="text-align: center; padding: 40px;">
+                            <p>Carregando categorias...</p>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(loadingModal);
+
+                // Carregar categorias antes de abrir a modal
+                const categories = await categoriesAPI.list();
+                
+       
+                
+                // Remover loading
+                loadingModal.remove();
+                
+                // Filtrar categorias de despesa (comparar com maiúsculas pois a API retorna minúsculo)
+                const despesaCategories = categories.filter(c => c.type.toUpperCase() === 'DESPESA');
+                
+               
+                
+                if (despesaCategories.length === 0) {
+                    alert('Nenhuma categoria de despesa encontrada. Por favor, cadastre categorias de despesa primeiro.');
+                    return;
+                }
+                
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h3>${expenseData ? 'Editar Despesa Fixa' : 'Nova Despesa Fixa'}</h3>
+                            <button class="close-btn">&times;</button>
+                        </div>
+                        <form id="fixedExpenseForm">
+                            <div class="form-group">
+                                <label>Descrição</label>
+                                <input type="text" id="fixedExpenseDescription" required value="${expenseData?.description || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Valor</label>
+                                <input type="number" step="0.01" id="fixedExpenseAmount" required value="${expenseData?.amount || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria</label>
+                                <select id="fixedExpenseCategory" required>
+                                    <option value="">Selecione...</option>
+                                    ${despesaCategories.map(c => {
+                                        const selected = expenseData?.category_id == c.id ? 'selected' : '';
+                                        return `<option value="${c.id}" ${selected}>${c.name}</option>`;
+                                    }).join('')}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Dia do Mês (1-31)</label>
+                                <input type="number" min="1" max="31" id="fixedExpenseDay" required value="${expenseData?.day_of_month || ''}">
+                            </div>
+                            <button type="submit" class="btn">${expenseData ? 'Salvar' : 'Adicionar'}</button>
+                        </form>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+
+                modal.querySelector('.close-btn').addEventListener('click', () => modal.remove());
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.remove();
+                });
+
+                document.getElementById('fixedExpenseForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const formData = {
+                        description: document.getElementById('fixedExpenseDescription').value,
+                        amount: parseFloat(document.getElementById('fixedExpenseAmount').value),
+                        category_id: parseInt(document.getElementById('fixedExpenseCategory').value),
+                        day_of_month: parseInt(document.getElementById('fixedExpenseDay').value)
+                    };
+
+                  
+
+                    try {
+                        if (expenseData) {
+                            await fixedExpensesAPI.update(expenseData.id, formData);
+                        } else {
+                            await fixedExpensesAPI.create(formData);
+                        }
+                        modal.remove();
+                        loadFixedExpenses();
+                    } catch (error) {
+                        console.error('Erro ao salvar:', error);
+                        alert('Erro ao salvar despesa fixa');
+                    }
+                });
+            } catch (error) {
+                console.error('Erro ao carregar categorias:', error);
+                alert('Erro ao carregar categorias. Tente novamente.');
+            }
+        }
+
+        window.editFixedExpense = (id) => {
+            const expense = window.fixedExpensesData.find(e => e.id === id);
+            if (expense) showFixedExpenseModal(expense);
+        };
+
+        window.deleteFixedExpense = async (id) => {
+            if (confirm('Tem certeza que deseja excluir esta despesa fixa?')) {
+                try {
+                    await fixedExpensesAPI.delete(id);
+                    loadFixedExpenses();
+                } catch (error) {
+                    alert('Erro ao excluir despesa fixa');
+                }
+            }
+        };
+
+        // Income
+        async function renderIncome(content) {
+            content.innerHTML = `
+                <h1 style="color: #333; margin-bottom: 30px;">Receitas</h1>
+                <div id="incomeContent">Carregando...</div>
+            `;
+
+            loadIncome();
+        }
+
+        async function loadIncome() {
+            try {
+                const [incomeData, variableIncomes] = await Promise.all([
+                    incomeAPI.get(),
+                    incomeAPI.listVariable()
+                ]);
+
+                const totalVariable = variableIncomes.reduce((sum, v) => sum + parseFloat(v.amount), 0);
+                const totalIncome = parseFloat(incomeData.fixed_amount) + totalVariable;
+
+                const incomeContent = document.getElementById('incomeContent');
+                incomeContent.innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h4>Receita Total Líquida</h4>
+                            <div class="value">R$ ${totalIncome.toFixed(2)}</div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>Receita Mensal Fixa</h3>
+                        <div class="form-group">
+                            <label>Valor Fixo Mensal</label>
+                            <input type="number" step="0.01" id="fixedIncomeInput" value="${incomeData.fixed_amount}" placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <h3>Receitas Variáveis</h3>
+                        <button class="btn" id="newVariableIncomeBtn" style="margin-bottom: 20px;">Adicionar Receita Variável</button>
+                        <div id="variableIncomesContent"></div>
+                    </div>
+                `;
+
+                let debounceTimer;
+                document.getElementById('fixedIncomeInput').addEventListener('input', (e) => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(async () => {
+                        try {
+                            await incomeAPI.update({
+                                fixed_amount: parseFloat(e.target.value) || 0,
+                                bonus_amount: incomeData.bonus_amount || 0
+                            });
+                            loadIncome();
+                        } catch (error) {
+                            alert('Erro ao atualizar receita fixa');
+                        }
+                    }, 1000);
+                });
+
+                document.getElementById('newVariableIncomeBtn').addEventListener('click', () => showVariableIncomeModal());
+
+                const variableContent = document.getElementById('variableIncomesContent');
+                if (variableIncomes.length > 0) {
+                    variableContent.innerHTML = `
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Descrição</th>
+                                        <th>Valor</th>
+                                        <th>Válido Até</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${variableIncomes.map(variable => `
+                                        <tr>
+                                            <td>${variable.description}</td>
+                                            <td>R$ ${parseFloat(variable.amount).toFixed(2)}</td>
+                                            <td>${variable.valid_until ? new Date(variable.valid_until).toLocaleDateString('pt-BR') : 'Indefinido'}</td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <button class="btn btn-secondary" onclick="editVariableIncome(${variable.id})">Editar</button>
+                                                    <button class="btn btn-danger" onclick="deleteVariableIncome(${variable.id})">Excluir</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                } else {
+                    variableContent.innerHTML = '<div class="empty-state"><p>Nenhuma receita variável cadastrada</p></div>';
+                }
+
+                window.variableIncomesData = variableIncomes;
+            } catch (error) {
+                console.error('Erro ao carregar receitas:', error);
+                document.getElementById('incomeContent').innerHTML = '<p>Erro ao carregar receitas</p>';
+            }
+        }
+
+        function showVariableIncomeModal(incomeData = null) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3>${incomeData ? 'Editar Receita Variável' : 'Nova Receita Variável'}</h3>
+                        <button class="close-btn">&times;</button>
+                    </div>
+                    <form id="variableIncomeForm">
+                        <div class="form-group">
+                            <label>Descrição</label>
+                            <input type="text" id="variableIncomeDescription" required value="${incomeData?.description || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Valor</label>
+                            <input type="number" step="0.01" id="variableIncomeAmount" required value="${incomeData?.amount || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Válido Até</label>
+                            <input type="date" id="variableIncomeValidUntil" value="${incomeData?.valid_until || ''}">
+                        </div>
+                        <button type="submit" class="btn">${incomeData ? 'Salvar' : 'Adicionar'}</button>
+                    </form>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            modal.querySelector('.close-btn').addEventListener('click', () => modal.remove());
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+
+            document.getElementById('variableIncomeForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = {
+                    description: document.getElementById('variableIncomeDescription').value,
+                    amount: parseFloat(document.getElementById('variableIncomeAmount').value),
+                    valid_until: document.getElementById('variableIncomeValidUntil').value,
+                    is_active: true
+                };
+
+                try {
+                    if (incomeData) {
+                        await incomeAPI.updateVariable(incomeData.id, formData);
+                    } else {
+                        await incomeAPI.createVariable(formData);
+                    }
+                    modal.remove();
+                    loadIncome();
+                } catch (error) {
+                    alert('Erro ao salvar receita variável');
+                }
+            });
+        }
+
+        window.editVariableIncome = (id) => {
+            const income = window.variableIncomesData.find(i => i.id === id);
+            if (income) showVariableIncomeModal(income);
+        };
+
+        window.deleteVariableIncome = async (id) => {
+            if (confirm('Tem certeza que deseja excluir esta receita variável?')) {
+                try {
+                    await incomeAPI.deleteVariable(id);
+                    loadIncome();
+                } catch (error) {
+                    alert('Erro ao excluir receita variável');
+                }
+            }
+        };
+
+        // Reports
+        async function renderReports(content) {
+            content.innerHTML = `
+                <h1 style="color: #333; margin-bottom: 30px;">Relatórios</h1>
+                
+                <div class="dashboard-card">
+                    <h3>Configurações do Relatório</h3>
+                    <div class="filter-container">
+                        <select id="reportType">
+                            <option value="mensal">Mensal</option>
+                            <option value="anual">Anual</option>
+                        </select>
+                        <select id="categoryFilter">
+                            <option value="all">Todas as Categorias</option>
+                        </select>
+                        <button class="btn" id="generateReportBtn">Gerar Relatório</button>
+                    </div>
+                </div>
+
+                <div id="reportContent"></div>
+            `;
+
+            try {
+                const categories = await categoriesAPI.list();
+                const categoryFilter = document.getElementById('categoryFilter');
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.name;
+                    categoryFilter.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar categorias:', error);
+            }
+
+            document.getElementById('generateReportBtn').addEventListener('click', generateReport);
+        }
+
+        async function generateReport() {
+            const reportType = document.getElementById('reportType').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const reportContent = document.getElementById('reportContent');
+
+            reportContent.innerHTML = '<div class="dashboard-card"><p>Gerando relatório...</p></div>';
+
+            try {
+                const [expenses, categories, incomeData, variableIncomes, fixedExpenses] = await Promise.all([
+                    expensesAPI.list(),
+                    categoriesAPI.list(),
+                    incomeAPI.get(),
+                    incomeAPI.listVariable(),
+                    fixedExpensesAPI.list()
+                ]);
+
                 const now = new Date();
                 let filteredExpenses = expenses;
-                
+
                 if (reportType === 'mensal') {
                     filteredExpenses = expenses.filter(e => {
                         const date = new Date(e.date);
@@ -1321,113 +1772,115 @@
                 }
 
                 if (categoryFilter !== 'all') {
-                    filteredExpenses = filteredExpenses.filter(e => e.categoryId === parseInt(categoryFilter));
+                    filteredExpenses = filteredExpenses.filter(e => e.category_id === parseInt(categoryFilter));
                 }
 
-                const totalExpenses = filteredExpenses.reduce((sum, e) => e.type === 'despesa' ? sum + e.amount : sum, 0);
-                const totalIncomeAmount = (income.fixed || 0) + 
-                    (income.variable?.reduce((sum, v) => sum + v.amount, 0) || 0); 
-                    
+                // Calcular total de despesas dos lançamentos
+                const totalExpensesFromLancamentos = filteredExpenses.reduce((sum, e) => 
+                    e.type.toUpperCase() === 'DESPESA' ? sum + parseFloat(e.amount) : sum, 0);
+                
+                // Calcular total de despesas fixas (considerar apenas para relatório mensal)
+                let totalFixedExpenses = 0;
+                let fixedExpensesToShow = [];
+                
+                if (reportType === 'mensal') {
+                    totalFixedExpenses = fixedExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+                    fixedExpensesToShow = fixedExpenses;
+                }
+                
+                // Total de despesas = lançamentos + despesas fixas
+                const totalExpenses = totalExpensesFromLancamentos + totalFixedExpenses;
+                
+      
+                
+                const totalIncomeFromExpenses = filteredExpenses.reduce((sum, e) => 
+                    e.type.toUpperCase() === 'RECEITA' ? sum + parseFloat(e.amount) : sum, 0);
 
-                setReportData({
-                    type: reportType,
-                    period: reportType === 'mensal' ? `${now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}` : now.getFullYear(),
-                    totalIncome: totalIncomeAmount,
-                    totalExpenses,
-                    balance: totalIncomeAmount - totalExpenses,
-                    expenses: filteredExpenses,
-                    categories: categories
-                });
-            };
+                const totalVariableIncome = variableIncomes.reduce((sum, v) => 
+                    sum + parseFloat(v.amount), 0);
+                
+                const totalIncome = parseFloat(incomeData.fixed_amount) + totalVariableIncome + totalIncomeFromExpenses;
+                const balance = totalIncome - totalExpenses;
 
-            const downloadPDF = () => {
-                if (!reportData) return;
-                
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                doc.setFontSize(20);
-                doc.text('Relatório Financeiro', 20, 20);
-                
-                doc.setFontSize(12);
-                doc.text(`Período: ${reportData.period}`, 20, 35);
-                doc.text(`Receita Total: R$ ${reportData.totalIncome.toFixed(2)}`, 20, 45);
-                doc.text(`Despesas Total: R$ ${reportData.totalExpenses.toFixed(2)}`, 20, 55);
-                doc.text(`Saldo: R$ ${reportData.balance.toFixed(2)}`, 20, 65);
-                
-                doc.text('Detalhamento:', 20, 80);
-                let y = 90;
-                
-                reportData.expenses.forEach(expense => {
-                    const category = reportData.categories.find(c => c.id === expense.categoryId);
-                    doc.text(`${new Date(expense.date).toLocaleDateString('pt-BR')} - ${expense.description} (${category?.name || 'Sem categoria'}): R$ ${expense.amount.toFixed(2)}`, 20, y);
-                    y += 10;
-                    if (y > 280) {
-                        doc.addPage();
-                        y = 20;
-                    }
-                });
-                
-                doc.save(`relatorio-${reportData.type}-${Date.now()}.pdf`);
-                alert('PDF baixado com sucesso!');
-            };
+                const period = reportType === 'mensal' 
+                    ? now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+                    : now.getFullYear();
 
-            const sendEmail = () => {
-                alert('Funcionalidade de envio por email será implementada com o backend');
-            };
-
-            return (
-                <div>
-                    <h1 style={{color: '#333', marginBottom: '30px'}}>Relatórios</h1>
-                    
-                    <div className="dashboard-card">
-                        <h3>Configurações do Relatório</h3>
-                        <div className="filter-container">
-                            <select value={reportType} onChange={(e) => setReportType(e.target.value)}>
-                                <option value="mensal">Mensal</option>
-                                <option value="anual">Anual</option>
-                            </select>
-                            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-                                <option value="all">Todas as Categorias</option>
-                                {categories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                ))}
-                            </select>
-                            <button className="btn" onClick={generateReport}>
-                                Gerar Relatório
-                            </button>
+                reportContent.innerHTML = `
+                    <div class="dashboard-card">
+                        <h3>Relatório ${reportType === 'mensal' ? 'Mensal' : 'Anual'} - ${period}</h3>
+                        
+                        <div class="stats-grid" style="margin-bottom: 30px;">
+                            <div class="stat-card">
+                                <h4>Receita Total</h4>
+                                <div class="value">R$ ${totalIncome.toFixed(2)}</div>
+                            </div>
+                            <div class="stat-card">
+                                <h4>Despesas de Lançamentos</h4>
+                                <div class="value">R$ ${totalExpensesFromLancamentos.toFixed(2)}</div>
+                            </div>
+                            ${reportType === 'mensal' ? `
+                                <div class="stat-card">
+                                    <h4>Despesas Fixas</h4>
+                                    <div class="value">R$ ${totalFixedExpenses.toFixed(2)}</div>
+                                </div>
+                            ` : ''}
+                            <div class="stat-card">
+                                <h4>Despesas Total</h4>
+                                <div class="value">R$ ${totalExpenses.toFixed(2)}</div>
+                            </div>
+                            <div class="stat-card">
+                                <h4>Saldo</h4>
+                                <div class="value" style="color: ${balance >= 0 ? '#28a745' : '#dc3545'}">
+                                    R$ ${balance.toFixed(2)}
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    {reportData && (
-                        <div className="dashboard-card">
-                            <h3>Relatório {reportData.type === 'mensal' ? 'Mensal' : 'Anual'} - {reportData.period}</h3>
-                            
-                            <div className="stats-grid" style={{marginBottom: '30px'}}>
-                                <div className="stat-card">
-                                    <h4>Receita Total</h4>
-                                    <div className="value">R$ {reportData.totalIncome.toFixed(2)}</div>
-                                </div>
-                                <div className="stat-card">
-                                    <h4>Despesas Total</h4>
-                                    <div className="value">R$ {reportData.totalExpenses.toFixed(2)}</div>
-                                </div>
-                                <div className="stat-card">
-                                    <h4>Saldo</h4>
-                                    <div className="value">R$ {reportData.balance.toFixed(2)}</div>
+                        ${reportType === 'mensal' && fixedExpensesToShow.length > 0 ? `
+                            <div style="margin-bottom: 30px;">
+                                <h4 style="color: #333; margin-bottom: 15px;">Despesas Fixas do Mês</h4>
+                                <div class="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Descrição</th>
+                                                <th>Categoria</th>
+                                                <th>Valor</th>
+                                                <th>Dia do Mês</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${fixedExpensesToShow.map(expense => {
+                                                const categoryName = getCategoryName(expense, categories);
+                                                return `
+                                                    <tr>
+                                                        <td>${expense.description}</td>
+                                                        <td>${categoryName}</td>
+                                                        <td>R$ ${parseFloat(expense.amount).toFixed(2)}</td>
+                                                        <td>Dia ${expense.day_of_month}</td>
+                                                    </tr>
+                                                `;
+                                            }).join('')}
+                                            <tr style="font-weight: bold; background: #f8f9fa;">
+                                                <td colspan="2">Total Despesas Fixas</td>
+                                                <td>R$ ${totalFixedExpenses.toFixed(2)}</td>
+                                                <td></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
+                        ` : ''}
 
-                            <div className="action-buttons" style={{marginBottom: '20px'}}>
-                                <button className="btn btn-success" onClick={downloadPDF}>
-                                    Baixar PDF
-                                </button>
-                                <button className="btn" onClick={sendEmail}>
-                                    Enviar por Email
-                                </button>
-                            </div>
+                        <div class="action-buttons" style="margin-bottom: 20px;">
+                            <button class="btn btn-success" id="downloadPdfBtn">Baixar PDF</button>
+                            <button class="btn" id="sendEmailBtn">Enviar por Email</button>
+                        </div>
 
-                            <div className="table-container">
+                        ${filteredExpenses.length > 0 ? `
+                            <h4 style="color: #333; margin-bottom: 15px;">Lançamentos do Período</h4>
+                            <div class="table-container">
                                 <table>
                                     <thead>
                                         <tr>
@@ -1439,251 +1892,194 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {reportData.expenses.map(expense => {
-                                            const category = reportData.categories.find(c => c.id === expense.categoryId);
-                                            return (
-                                                <tr key={expense.id}>
-                                                    <td>{new Date(expense.date).toLocaleDateString('pt-BR')}</td>
-                                                    <td>{expense.description}</td>
-                                                    <td>{category?.name || 'Sem categoria'}</td>
+                                        ${filteredExpenses.map(expense => {
+                                            const categoryName = getCategoryName(expense, categories);
+                                            
+                                            return `
+                                                <tr>
+                                                    <td>${new Date(expense.date).toLocaleDateString('pt-BR')}</td>
+                                                    <td>${expense.description}</td>
+                                                    <td>${categoryName}</td>
                                                     <td>
-                                                        <span className={`badge ${expense.type === 'receita' ? 'badge-success' : 'badge-danger'}`}>
-                                                            {expense.type}
+                                                        <span class="badge ${expense.type.toUpperCase() === 'RECEITA' ? 'badge-success' : 'badge-danger'}">
+                                                            ${expense.type.toUpperCase()}
                                                         </span>
                                                     </td>
-                                                    <td>R$ {expense.amount.toFixed(2)}</td>
+                                                    <td>R$ ${parseFloat(expense.amount).toFixed(2)}</td>
                                                 </tr>
-                                            );
-                                        })}
+                                            `;
+                                        }).join('')}
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
+                        ` : '<div class="empty-state"><p>Nenhum lançamento encontrado para este período</p></div>'}
+                    </div>
+                `;
 
-        const Analysis = () => {
-            const [filter, setFilter] = useState('entradas');
-            const [period, setPeriod] = useState('mensal');
-            const [chartData, setChartData] = useState([]);
+                document.getElementById('downloadPdfBtn').addEventListener('click', () => {
+                    downloadReportPDF({
+                        period,
+                        reportType,
+                        totalIncome,
+                        totalExpenses,
+                        totalExpensesFromLancamentos,
+                        totalFixedExpenses,
+                        balance,
+                        expenses: filteredExpenses,
+                        fixedExpenses: fixedExpensesToShow,
+                        categories
+                    });
+                });
 
-            useEffect(() => {
-                generateChartData();
-            }, [filter, period]);
+                document.getElementById('sendEmailBtn').addEventListener('click', () => {
+                    alert('Funcionalidade de envio por email será implementada com o backend');
+                });
 
-            const generateChartData = () => {
-                const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
-                const income = JSON.parse(localStorage.getItem('income') || '{}');
-                const categories = JSON.parse(localStorage.getItem('categories') || '[]');
+            } catch (error) {
+                console.error('Erro ao gerar relatório:', error);
+                reportContent.innerHTML = '<div class="dashboard-card"><p style="color: red;">Erro ao gerar relatório</p></div>';
+            }
+        }
+
+        function downloadReportPDF(reportData) {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
                 
-                const now = new Date();
-                let data = [];
-
-                if (filter === 'entradas') {
-                    if (period === 'mensal') {
-                        data = [
-                            { name: 'Receita Fixa', value: income.fixed || 0 },
-                            { name: 'Receita Variável', value: income.variable?.reduce((sum, v) => sum + v.amount, 0) || 0 },
+                doc.setFontSize(20);
+                doc.text('Relatorio Financeiro', 20, 20);
                 
-                        ];
-                    } else {
-                        const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-                        data = months.map((month, index) => ({
-                            name: month,
-                            value: (income.fixed || 0)
-                        }));
-                    }
-                } else if (filter === 'saidas') {
-                    const filteredExpenses = expenses.filter(e => e.type === 'despesa');
+                doc.setFontSize(12);
+                doc.text(`Periodo: ${reportData.period}`, 20, 35);
+                doc.text(`Receita Total: R$ ${reportData.totalIncome.toFixed(2)}`, 20, 45);
+                doc.text(`Despesas Total: R$ ${reportData.totalExpenses.toFixed(2)}`, 20, 55);
+                doc.text(`Saldo: R$ ${reportData.balance.toFixed(2)}`, 20, 65);
+                
+                let y = 80;
+                
+                if (reportData.fixedExpenses && reportData.fixedExpenses.length > 0) {
+                    doc.text('Despesas Fixas:', 20, y);
+                    y += 10;
                     
-                    if (period === 'mensal') {
-                        const monthlyExpenses = filteredExpenses.filter(e => {
-                            const date = new Date(e.date);
-                            return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-                        });
+                    reportData.fixedExpenses.forEach(expense => {
+                        const categoryName = getCategoryName(expense, reportData.categories);
+                        const line = `${expense.description} (${categoryName}): R$ ${parseFloat(expense.amount).toFixed(2)}`;
                         
-                        const expensesByCategory = {};
-                        monthlyExpenses.forEach(expense => {
-                            const category = categories.find(c => c.id === expense.categoryId);
-                            const categoryName = category?.name || 'Sem categoria';
-                            expensesByCategory[categoryName] = (expensesByCategory[categoryName] || 0) + expense.amount;
-                        });
-                        
-                        data = Object.entries(expensesByCategory).map(([name, value]) => ({
-                            name,
-                            value
-                        }));
-                    } else {
-                        const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-                        data = months.map(month => {
-                            const monthIndex = months.indexOf(month);
-                            const monthlyExpenses = filteredExpenses.filter(e => {
-                                const date = new Date(e.date);
-                                return date.getMonth() === monthIndex && date.getFullYear() === now.getFullYear();
-                            });
-                            return {
-                                name: month,
-                                value: monthlyExpenses.reduce((sum, e) => sum + e.amount, 0)
-                            };
-                        });
-                    }
+                        if (y > 280) {
+                            doc.addPage();
+                            y = 20;
+                        }
+                        doc.text(line, 20, y);
+                        y += 7;
+                    });
+                    
+                    y += 10;
                 }
-
-                setChartData(data);
-            };
-
-            const maxValue = Math.max(...chartData.map(d => d.value), 1);
-
-            return (
-                <div>
-                    <h1 style={{color: '#333', marginBottom: '30px'}}>Análises</h1>
+                
+                doc.text('Lancamentos:', 20, y);
+                y += 10;
+                
+                reportData.expenses.forEach(expense => {
+                    const categoryName = getCategoryName(expense, reportData.categories);
+                    const line = `${new Date(expense.date).toLocaleDateString('pt-BR')} - ${expense.description} (${categoryName}): R$ ${parseFloat(expense.amount).toFixed(2)}`;
                     
-                    <div className="dashboard-card">
-                        <h3>Filtros</h3>
-                        <div className="filter-container">
-                            <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-                                <option value="entradas">Entradas</option>
-                                <option value="saidas">Saídas</option>
-                            </select>
-                            <select value={period} onChange={(e) => setPeriod(e.target.value)}>
-                                <option value="mensal">Mensal</option>
-                                <option value="anual">Anual</option>
-                            </select>
-                        </div>
-                    </div>
+                    if (line.length > 80) {
+                        const lines = doc.splitTextToSize(line, 170);
+                        lines.forEach(l => {
+                            if (y > 280) {
+                                doc.addPage();
+                                y = 20;
+                            }
+                            doc.text(l, 20, y);
+                            y += 7;
+                        });
+                    } else {
+                        if (y > 280) {
+                            doc.addPage();
+                            y = 20;
+                        }
+                        doc.text(line, 20, y);
+                        y += 10;
+                    }
+                });
+                
+                doc.save(`relatorio-${reportData.reportType}-${Date.now()}.pdf`);
+                alert('PDF baixado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao gerar PDF:', error);
+                alert('Erro ao gerar PDF. Verifique se a biblioteca jsPDF esta carregada.');
+            }
+        }
 
-                    <div className="dashboard-card">
-                        <h3>Visualização - {filter === 'entradas' ? 'Entradas' : 'Saídas'} ({period === 'mensal' ? 'Mensal' : 'Anual'})</h3>
-                        <div className="chart-container">
-                            <div className="simple-chart">
-                                <div className="bar-chart">
-                                    {chartData.map((item, index) => (
-                                        <div 
-                                            key={index}
-                                            className="bar" 
-                                            style={{
-                                                height: `${(item.value / maxValue) * 100}%`,
-                                                minHeight: '20px'
-                                            }}
-                                        >
-                                            <div className="bar-value">
-                                                R$ {item.value.toFixed(0)}
-                                            </div>
-                                            <div className="bar-label">
-                                                {item.name}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+        // Analysis
+        function renderAnalysis(content) {
+            content.innerHTML = `
+                <h1 style="color: #333; margin-bottom: 30px;">Análises</h1>
+                <div class="dashboard-card">
+                    <h3>Em desenvolvimento</h3>
+                    <p>Funcionalidade de análises será implementada em breve.</p>
+                </div>
+            `;
+        }
+
+        // Settings
+        function renderSettings(content) {
+            content.innerHTML = `
+                <h1 style="color: #333; margin-bottom: 30px;">Configurações</h1>
+                
+                <div class="dashboard-card">
+                    <h3>Perfil do Usuário</h3>
+                    <div class="profile-section">
+                        <div class="profile-avatar">
+                            ${state.currentUser?.name?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                        <div style="flex: 1;">
+                            <h2 style="color: #333; margin-bottom: 10px;">${state.currentUser?.name || 'Usuário'}</h2>
+                            <p style="color: #666;">${state.currentUser?.email || 'email@exemplo.com'}</p>
                         </div>
                     </div>
                 </div>
-            );
-        };
 
-        const Settings = ({ currentUser, setCurrentUser }) => {
-            const [formData, setFormData] = useState({
-                name: currentUser?.name || '',
-                email: currentUser?.email || '',
-                password: '',
-                newPassword: ''
-            });
+                <div class="dashboard-card">
+                    <h3>Editar Informações</h3>
+                    <form id="settingsForm">
+                        <div class="form-group">
+                            <label>Nome</label>
+                            <input type="text" id="settingsName" value="${state.currentUser?.name || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="settingsEmail" value="${state.currentUser?.email || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Nova Senha (deixe em branco para manter a atual)</label>
+                            <input type="password" id="settingsPassword" placeholder="Nova senha">
+                        </div>
+                        <button type="submit" class="btn">Salvar Alterações</button>
+                    </form>
+                </div>
+            `;
 
-            const handleSubmit = (e) => {
+            document.getElementById('settingsForm').addEventListener('submit', (e) => {
                 e.preventDefault();
-                
-                const users = JSON.parse(localStorage.getItem('users') || '[]');
-                const userIndex = users.findIndex(u => u.id === currentUser.id);
-                
-                if (userIndex !== -1) {
-                    users[userIndex] = {
-                        ...users[userIndex],
-                        name: formData.name,
-                        email: formData.email,
-                        password: formData.newPassword || users[userIndex].password,
-                        avatar: formData.name.charAt(0).toUpperCase()
-                    };
-                    
-                    localStorage.setItem('users', JSON.stringify(users));
-                    localStorage.setItem('currentUser', JSON.stringify(users[userIndex]));
-                    setCurrentUser(users[userIndex]);
-                    
-                    alert('Configurações salvas com sucesso!');
-                } else {
-                    // Se o usuário não existir, criar um novo
-                    const updatedUser = {
-                        ...currentUser,
-                        name: formData.name,
-                        email: formData.email,
-                        password: formData.newPassword || currentUser.password,
-                        avatar: formData.name.charAt(0).toUpperCase()
-                    };
-                    
-                    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-                    setCurrentUser(updatedUser);
-                    alert('Configurações salvas com sucesso!');
-                }
-            };
+                const updatedUser = {
+                    ...state.currentUser,
+                    name: document.getElementById('settingsName').value,
+                    email: document.getElementById('settingsEmail').value
+                };
 
-            return (
-                <div>
-                    <h1 style={{color: '#333', marginBottom: '30px'}}>Configurações</h1>
-                    
-                    <div className="dashboard-card">
-                        <h3>Perfil do Usuário</h3>
-                        <div className="profile-section">
-                            <div className="profile-avatar">
-                                {currentUser?.avatar || currentUser?.name?.charAt(0).toUpperCase() || 'U'}
-                            </div>
-                            <div style={{flex: 1}}>
-                                <h2 style={{color: '#333', marginBottom: '10px'}}>{currentUser?.name || 'Usuário'}</h2>
-                                <p style={{color: '#666'}}>{currentUser?.email || 'email@exemplo.com'}</p>
-                            </div>
-                        </div>
-                    </div>
+                localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                state.currentUser = updatedUser;
+                alert('Configurações salvas com sucesso!');
+                renderSettings(content);
+            });
+        }
 
-                    <div className="dashboard-card">
-                        <h3>Editar Informações</h3>
-                        <form onSubmit={handleSubmit}>
-                            <div className="form-group">
-                                <label>Nome</label>
-                                <input
-                                    type="text"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Email</label>
-                                <input
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Nova Senha (deixe em branco para manter a atual)</label>
-                                <input
-                                    type="password"
-                                    value={formData.newPassword}
-                                    onChange={(e) => setFormData({...formData, newPassword: e.target.value})}
-                                    placeholder="Nova senha"
-                                />
-                            </div>
-                            <button type="submit" className="btn">
-                                Salvar Alterações
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        // Initialize
+        init();
     </script>
+    <footer >
+        Todos os Direitos reservados © Desenvolvido por <a href="https://karythongomes.com.br" target="_blank" rel="noopener noreferrer"><strong>GomesTechnology</strong></a>
+    </footer>
 </body>
 </html>
