@@ -18,7 +18,9 @@ PyJWT==2.10.1
 ecdsa==0.19.1
 rsa==4.9
 pyasn1==0.6.1
-bcrypt
+passlib[bcrypt]
+bcrypt==4.2.0
+
 
 
 # 📧 E-mail e validação
