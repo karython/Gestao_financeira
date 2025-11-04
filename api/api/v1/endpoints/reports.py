@@ -7,14 +7,14 @@ from typing import Optional
 from decimal import Decimal
 from io import BytesIO
 
-from app.db.session import get_db
-from app.models.user import User
-from app.models.expense import Expense, ExpenseType
-from app.models.income import Income, VariableIncome, FixedIncome
-from app.schemas.reports import ReportRequest, ReportEmailRequest
-from app.api.deps import get_current_user
-from app.services.pdf_service import generate_report_pdf
-from app.services.email_service import send_report_email
+from api.db.session import get_db
+from api.models.user import User
+from api.models.expense import Expense, ExpenseType
+from api.models.income import Income, VariableIncome, FixedIncome
+from api.schemas.reports import ReportRequest, ReportEmailRequest
+from api.api.deps import get_current_user
+from api.services.pdf_service import generate_report_pdf
+from api.services.email_service import send_report_email
 
 router = APIRouter()
 

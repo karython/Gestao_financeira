@@ -2,7 +2,7 @@
 from pydantic import BaseModel
 from datetime import date, datetime
 from decimal import Decimal
-from app.models.expense import ExpenseType
+from api.models.expense import ExpenseType
 
 
 class ExpenseBase(BaseModel):

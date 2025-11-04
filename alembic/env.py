@@ -16,10 +16,10 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from app.db.base import Base
-from app.core.config import settings
+from api.db.base import Base
+from api.core.config import settings
 # Import all models to populate metadata
-from app.models import user, category, expense, fixed_expense, income
+from api.models import user, category, expense, fixed_expense, income
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

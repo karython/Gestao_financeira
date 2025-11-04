@@ -4,11 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, extract
 from typing import List, Optional
 
-from app.db.session import get_db
-from app.models.user import User
-from app.models.expense import Expense, ExpenseType
-from app.schemas.expense import ExpenseCreate, ExpenseUpdate, ExpenseResponse
-from app.api.deps import get_current_user
+from api.db.session import get_db
+from api.models.user import User
+from api.models.expense import Expense, ExpenseType
+from api.schemas.expense import ExpenseCreate, ExpenseUpdate, ExpenseResponse
+from api.api.deps import get_current_user
 
 router = APIRouter()
 

@@ -2,7 +2,7 @@
 from sqlalchemy import Column, Integer, String, Numeric, DateTime, ForeignKey, Boolean
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from app.db.base import Base
+from api.db.base import Base
 
 
 class FixedExpense(Base):

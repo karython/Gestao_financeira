@@ -5,12 +5,12 @@ from sqlalchemy import select, extract
 from typing import List
 from datetime import date
 
-from app.db.session import get_db
-from app.models.user import User
-from app.models.fixed_expense import FixedExpense
-from app.models.expense import Expense, ExpenseType
-from app.schemas.fixed_expense import FixedExpenseCreate, FixedExpenseUpdate, FixedExpenseResponse
-from app.api.deps import get_current_user
+from api.db.session import get_db
+from api.models.user import User
+from api.models.fixed_expense import FixedExpense
+from api.models.expense import Expense, ExpenseType
+from api.schemas.fixed_expense import FixedExpenseCreate, FixedExpenseUpdate, FixedExpenseResponse
+from api.api.deps import get_current_user
 
 router = APIRouter()
 

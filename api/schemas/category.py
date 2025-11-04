@@ -2,7 +2,7 @@
 from pydantic import BaseModel, validator
 from datetime import datetime
 from typing import Union
-from app.models.category import CategoryType
+from api.models.category import CategoryType
 
 
 class CategoryBase(BaseModel):

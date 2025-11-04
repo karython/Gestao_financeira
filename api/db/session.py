@@ -1,7 +1,7 @@
 # app/db/session.py
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from app.core.config import settings
+from api.core.config import settings
 
 # Replace pymysql with aiomysql for async
 async_url = settings.DATABASE_URL.replace('+pymysql', '+aiomysql')

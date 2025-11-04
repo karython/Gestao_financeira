@@ -3,7 +3,7 @@ import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-from app.core.config import settings
+from api.core.config import settings
 
 
 async def send_report_email(

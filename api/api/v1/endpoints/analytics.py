@@ -6,12 +6,12 @@ from typing import Optional
 from decimal import Decimal
 from datetime import datetime
 
-from app.db.session import get_db
-from app.models.user import User
-from app.models.expense import Expense, ExpenseType
-from app.models.category import Category
-from app.schemas.analytics import SummaryResponse, ChartDataResponse, DashboardStats
-from app.api.deps import get_current_user
+from api.db.session import get_db
+from api.models.user import User
+from api.models.expense import Expense, ExpenseType
+from api.models.category import Category
+from api.schemas.analytics import SummaryResponse, ChartDataResponse, DashboardStats
+from api.api.deps import get_current_user
 
 router = APIRouter()
 

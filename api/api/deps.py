@@ -9,9 +9,9 @@ from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.core.config import settings
-from app.db.session import get_db, engine, AsyncSessionLocal
-from app.models.user import User
+from api.core.config import settings
+from api.db.session import get_db, engine, AsyncSessionLocal
+from api.models.user import User
 
 security = HTTPBearer()
 logger = logging.getLogger(__name__)

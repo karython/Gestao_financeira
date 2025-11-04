@@ -13,10 +13,10 @@ from starlette.responses import Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.core.config import settings
-from app.api.v1.router import api_router
-from app.db.session import engine
-from app.db.base import Base
+from api.core.config import settings
+from api.api.v1.router import api_router
+from api.db.session import engine
+from api.db.base import Base
 
 
 @asynccontextmanager

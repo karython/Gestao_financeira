@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import enum
-from app.db.base import Base
+from api.db.base import Base
 
 
 class CategoryType(str, enum.Enum):

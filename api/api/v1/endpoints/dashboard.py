@@ -5,14 +5,14 @@ from sqlalchemy import select, func, extract
 from typing import List
 from datetime import datetime
 
-from app.db.session import get_db
-from app.models.user import User
-from app.models.expense import Expense, ExpenseType
-from app.models.category import Category
-from app.models.income import Income, VariableIncome, FixedIncome
-from app.schemas.analytics import DashboardStats
-from app.schemas.expense import ExpenseResponse
-from app.api.deps import get_current_user
+from api.db.session import get_db
+from api.models.user import User
+from api.models.expense import Expense, ExpenseType
+from api.models.category import Category
+from api.models.income import Income, VariableIncome, FixedIncome
+from api.schemas.analytics import DashboardStats
+from api.schemas.expense import ExpenseResponse
+from api.api.deps import get_current_user
 
 router = APIRouter()
 
