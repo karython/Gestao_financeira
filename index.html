@@ -475,6 +475,34 @@
             display: none !important;
         }
 
+        /* Loader Styles */
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -647,30 +675,48 @@
         // Helper function to find category name
         function getCategoryName(expense, categories) {
             let categoryName = 'Sem categoria';
-            
+
             if (expense.category_id) {
                 const cat = categories.find(c => c.id === expense.category_id);
                 if (cat) return cat.name;
             }
-            
+
             if (expense.category_id) {
                 const cat = categories.find(c => c.id == expense.category_id);
                 if (cat) return cat.name;
             }
-            
+
             if (expense.category) {
                 if (typeof expense.category === 'object') {
                     return expense.category.name || 'Sem categoria';
                 }
                 return expense.category;
             }
-            
+
             if (expense.categoryId) {
                 const cat = categories.find(c => c.id == expense.categoryId);
                 if (cat) return cat.name;
             }
-            
+
             return categoryName;
+        }
+
+        // Loader functions
+        function showLoader() {
+            state.isLoading = true;
+            const loader = document.createElement('div');
+            loader.className = 'loader-overlay';
+            loader.id = 'globalLoader';
+            loader.innerHTML = '<div class="loader"></div>';
+            document.body.appendChild(loader);
+        }
+
+        function hideLoader() {
+            state.isLoading = false;
+            const loader = document.getElementById('globalLoader');
+            if (loader) {
+                loader.remove();
+            }
         }
 
         // App State
@@ -678,7 +724,8 @@
             isAuthenticated: false,
             currentUser: null,
             currentView: 'dashboard',
-            sidebarOpen: false
+            sidebarOpen: false,
+            isLoading: false
         };
 
         // Initialize App
@@ -745,17 +792,17 @@
 
             document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                
+
                 const errorDiv = document.getElementById('errorMessage');
                 const nameInput = document.getElementById('name');
-                
+
                 if (isRegister && !nameInput.value.trim()) {
                     errorDiv.textContent = 'Por favor, preencha o campo nome.';
                     errorDiv.style.display = 'block';
                     nameInput.focus();
                     return;
                 }
-                
+
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 const name = nameInput.value;
@@ -763,6 +810,7 @@
 
                 submitBtn.disabled = true;
                 errorDiv.style.display = 'none';
+                showLoader();
 
                 try {
                     if (isRegister) {
@@ -778,6 +826,7 @@
                         handleLogin({ ...profile, token: response.access_token });
                     }
                 } catch (err) {
+                    hideLoader();
                     errorDiv.textContent = 'Erro no login/cadastro. Verifique suas credenciais.';
                     errorDiv.style.display = 'block';
                 } finally {
@@ -787,19 +836,27 @@
         }
 
         function handleLogin(userData) {
+            showLoader();
             localStorage.setItem('currentUser', JSON.stringify(userData));
             state.currentUser = userData;
             state.isAuthenticated = true;
-            renderApp();
+            setTimeout(() => {
+                hideLoader();
+                renderApp();
+            }, 1000); // Simular tempo de carregamento
         }
 
         function handleLogout() {
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('token');
-            state.currentUser = null;
-            state.isAuthenticated = false;
-            state.currentView = 'dashboard';
-            renderLogin();
+            showLoader();
+            setTimeout(() => {
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('token');
+                state.currentUser = null;
+                state.isAuthenticated = false;
+                state.currentView = 'dashboard';
+                hideLoader();
+                renderLogin();
+            }, 500); // Simular tempo de carregamento
         }
 
         // Render App
@@ -900,6 +957,8 @@
                 <div id="dashboardContent">Carregando...</div>
             `;
 
+            showLoader();
+
             try {
                 const [statsData, transactions] = await Promise.all([
                     dashboardAPI.stats(),
@@ -970,6 +1029,8 @@
             } catch (error) {
                 console.error('Erro ao carregar dashboard:', error);
                 document.getElementById('dashboardContent').innerHTML = '<p>Erro ao carregar dados do dashboard</p>';
+            } finally {
+                hideLoader();
             }
         }
 
@@ -986,7 +1047,9 @@
 
             document.getElementById('newCategoryBtn').addEventListener('click', () => showCategoryModal());
 
-            loadCategories();
+            showLoader();
+            await loadCategories();
+            hideLoader();
         }
 
         async function loadCategories() {
@@ -1115,7 +1178,9 @@
             `;
 
             document.getElementById('newExpenseBtn').addEventListener('click', () => showExpenseModal());
-            loadExpenses();
+            showLoader();
+            await loadExpenses();
+            hideLoader();
         }
 
         async function loadExpenses() {
@@ -1336,7 +1401,9 @@
             `;
 
             document.getElementById('newFixedExpenseBtn').addEventListener('click', () => showFixedExpenseModal());
-            loadFixedExpenses();
+            showLoader();
+            await loadFixedExpenses();
+            hideLoader();
         }
 
         async function loadFixedExpenses() {
@@ -1532,7 +1599,9 @@
                 <div id="incomeContent">Carregando...</div>
             `;
 
-            loadIncome();
+            showLoader();
+            await loadIncome();
+            hideLoader();
         }
 
         async function loadIncome() {
@@ -1706,7 +1775,7 @@
         async function renderReports(content) {
             content.innerHTML = `
                 <h1 style="color: #333; margin-bottom: 30px;">Relatórios</h1>
-                
+
                 <div class="dashboard-card">
                     <h3>Configurações do Relatório</h3>
                     <div class="filter-container">
@@ -1724,6 +1793,7 @@
                 <div id="reportContent"></div>
             `;
 
+            showLoader();
             try {
                 const categories = await categoriesAPI.list();
                 const categoryFilter = document.getElementById('categoryFilter');
@@ -1735,6 +1805,8 @@
                 });
             } catch (error) {
                 console.error('Erro ao carregar categorias:', error);
+            } finally {
+                hideLoader();
             }
 
             document.getElementById('generateReportBtn').addEventListener('click', generateReport);
@@ -1746,6 +1818,7 @@
             const reportContent = document.getElementById('reportContent');
 
             reportContent.innerHTML = '<div class="dashboard-card"><p>Gerando relatório...</p></div>';
+            showLoader();
 
             try {
                 const [expenses, categories, incomeData, variableIncomes, fixedExpenses] = await Promise.all([
@@ -1938,6 +2011,8 @@
             } catch (error) {
                 console.error('Erro ao gerar relatório:', error);
                 reportContent.innerHTML = '<div class="dashboard-card"><p style="color: red;">Erro ao gerar relatório</p></div>';
+            } finally {
+                hideLoader();
             }
         }
 
@@ -2026,7 +2101,7 @@
         function renderSettings(content) {
             content.innerHTML = `
                 <h1 style="color: #333; margin-bottom: 30px;">Configurações</h1>
-                
+
                 <div class="dashboard-card">
                     <h3>Perfil do Usuário</h3>
                     <div class="profile-section">
@@ -2060,18 +2135,29 @@
                 </div>
             `;
 
-            document.getElementById('settingsForm').addEventListener('submit', (e) => {
+            document.getElementById('settingsForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const updatedUser = {
-                    ...state.currentUser,
-                    name: document.getElementById('settingsName').value,
-                    email: document.getElementById('settingsEmail').value
-                };
+                showLoader();
 
-                localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-                state.currentUser = updatedUser;
-                alert('Configurações salvas com sucesso!');
-                renderSettings(content);
+                try {
+                    const updatedUser = {
+                        ...state.currentUser,
+                        name: document.getElementById('settingsName').value,
+                        email: document.getElementById('settingsEmail').value
+                    };
+
+                    // Simular atualização no backend
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                    state.currentUser = updatedUser;
+                    alert('Configurações salvas com sucesso!');
+                    renderSettings(content);
+                } catch (error) {
+                    alert('Erro ao salvar configurações');
+                } finally {
+                    hideLoader();
+                }
             });
         }
 
