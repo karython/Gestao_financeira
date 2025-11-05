@@ -810,7 +810,6 @@
 
                 submitBtn.disabled = true;
                 errorDiv.style.display = 'none';
-                showLoader();
 
                 try {
                     if (isRegister) {
@@ -826,7 +825,6 @@
                         handleLogin({ ...profile, token: response.access_token });
                     }
                 } catch (err) {
-                    hideLoader();
                     errorDiv.textContent = 'Erro no login/cadastro. Verifique suas credenciais.';
                     errorDiv.style.display = 'block';
                 } finally {
@@ -836,27 +834,19 @@
         }
 
         function handleLogin(userData) {
-            showLoader();
             localStorage.setItem('currentUser', JSON.stringify(userData));
             state.currentUser = userData;
             state.isAuthenticated = true;
-            setTimeout(() => {
-                hideLoader();
-                renderApp();
-            }, 1000); // Simular tempo de carregamento
+            renderApp();
         }
 
         function handleLogout() {
-            showLoader();
-            setTimeout(() => {
-                localStorage.removeItem('currentUser');
-                localStorage.removeItem('token');
-                state.currentUser = null;
-                state.isAuthenticated = false;
-                state.currentView = 'dashboard';
-                hideLoader();
-                renderLogin();
-            }, 500); // Simular tempo de carregamento
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('token');
+            state.currentUser = null;
+            state.isAuthenticated = false;
+            state.currentView = 'dashboard';
+            renderLogin();
         }
 
         // Render App
