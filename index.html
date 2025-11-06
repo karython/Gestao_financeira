@@ -6,7 +6,7 @@
     <title>Sistema de Gestão Financeira Pessoal</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/7075/7075618.png">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
     <style>
         * {
             margin: 0;
@@ -209,7 +209,13 @@
             cursor: not-allowed;
         }
 
-        
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
 
         .btn-danger {
             background: #dc3545;
@@ -696,6 +702,21 @@
             return categoryName;
         }
 
+        // Helper function to format date correctly (avoid timezone issues)
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const [year, month, day] = dateString.split('-').map(Number);
+            return new Date(year, month - 1, day).toLocaleDateString('pt-BR');
+        }
+
+        // Helper function to get today's date in local format
+        function getTodayLocal() {
+            const today = new Date();
+            return today.getFullYear() + '-' +
+                   String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                   String(today.getDate()).padStart(2, '0');
+        }
+
         // Loader functions
         function showLoader() {
             state.isLoading = true;
@@ -721,7 +742,7 @@
             currentView: 'dashboard',
             sidebarOpen: false,
             isLoading: false,
-            dashboardView: 'current' // 'current' or 'history'
+            dashboardView: 'current' // 'current' or 'all'
         };
 
         // Initialize App
@@ -941,25 +962,19 @@
             content.innerHTML = `
                 <h1 style="color: #333; margin-bottom: 30px;">Dashboard</h1>
                 <div style="margin-bottom: 20px;">
-                    <button class="btn" id="currentMonthBtn" style="margin-right: 10px;">Mês Atual</button>
-                    <button type="button" class="btn btn-success" id="historyBtn">Histórico Completo</button>
+                    <button class="btn ${state.dashboardView === 'current' ? 'btn-secondary' : ''}" id="currentMonthBtn">Mês Atual</button>
+                    <button class="btn ${state.dashboardView === 'all' ? 'btn-secondary' : ''}" id="allTransactionsBtn">Histórico</button>
                 </div>
                 <div id="dashboardContent">Carregando...</div>
             `;
-
-            // Set active button based on current view
-            document.getElementById('currentMonthBtn').classList.toggle('btn', state.dashboardView === 'current');
-            document.getElementById('currentMonthBtn').classList.toggle('btn-secondary', state.dashboardView !== 'current');
-            document.getElementById('historyBtn').classList.toggle('btn', state.dashboardView === 'history');
-            document.getElementById('historyBtn').classList.toggle('btn-secondary', state.dashboardView !== 'history');
 
             document.getElementById('currentMonthBtn').addEventListener('click', () => {
                 state.dashboardView = 'current';
                 renderDashboard(content);
             });
 
-            document.getElementById('historyBtn').addEventListener('click', () => {
-                state.dashboardView = 'history';
+            document.getElementById('allTransactionsBtn').addEventListener('click', () => {
+                state.dashboardView = 'all';
                 renderDashboard(content);
             });
 
@@ -1001,7 +1016,7 @@
                     </div>
 
                     <div class="dashboard-card">
-                        <h3>${state.dashboardView === 'current' ? 'Transações do Mês Atual' : 'Histórico Completo de Transações'}</h3>
+                        <h3>${state.dashboardView === 'current' ? 'Transações do Mês Atual' : 'Histórico de Transações'}</h3>
                         ${stats.transactions.length > 0 ? `
                             <div class="table-container">
                                 <table>
@@ -1311,7 +1326,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Data</label>
-                                <input type="date" id="expenseDate" required value="${expenseData?.date || new Date().toISOString().split('T')[0]}">
+                                <input type="date" id="expenseDate" required value="${expenseData?.date || getTodayLocal()}">
                             </div>
                             <button type="submit" class="btn">${expenseData ? 'Salvar' : 'Adicionar'}</button>
                         </form>
@@ -1788,13 +1803,13 @@
                         <select id="reportType">
                             <option value="mensal">Mensal</option>
                             <option value="anual">Anual</option>
-                            <option value="personalizado">Período Personalizado</option>
+                            <option value="personalizado">Personalizado</option>
                         </select>
                         <select id="categoryFilter">
                             <option value="all">Todas as Categorias</option>
                         </select>
-                        <input type="date" id="startDate" placeholder="Data de início" style="display: none;">
-                        <input type="date" id="endDate" placeholder="Data de fim" style="display: none;">
+                        <input type="date" id="startDate" placeholder="Data início" style="display: none;">
+                        <input type="date" id="endDate" placeholder="Data fim" style="display: none;">
                         <button class="btn" id="generateReportBtn">Gerar Relatório</button>
                     </div>
                 </div>
@@ -1820,11 +1835,9 @@
 
             // Event listener para mostrar/ocultar campos de data
             document.getElementById('reportType').addEventListener('change', function() {
-                const reportType = this.value;
                 const startDateInput = document.getElementById('startDate');
                 const endDateInput = document.getElementById('endDate');
-
-                if (reportType === 'personalizado') {
+                if (this.value === 'personalizado') {
                     startDateInput.style.display = 'block';
                     endDateInput.style.display = 'block';
                     startDateInput.required = true;
@@ -1849,159 +1862,81 @@
             const endDate = document.getElementById('endDate').value;
             const reportContent = document.getElementById('reportContent');
 
+            // Validação para relatório personalizado
+            if (reportType === 'personalizado') {
+                if (!startDate || !endDate) {
+                    alert('Por favor, selecione as datas de início e fim para o relatório personalizado.');
+                    return;
+                }
+                if (new Date(startDate) > new Date(endDate)) {
+                    alert('A data de início não pode ser posterior à data de fim.');
+                    return;
+                }
+            }
+
             reportContent.innerHTML = '<div class="dashboard-card"><p>Gerando relatório...</p></div>';
             showLoader();
 
             try {
-                const [expenses, categories, incomeData, variableIncomes, fixedExpenses] = await Promise.all([
-                    expensesAPI.list(),
-                    categoriesAPI.list(),
-                    incomeAPI.get(),
-                    incomeAPI.listVariable(),
-                    fixedExpensesAPI.list()
-                ]);
-
-                const now = new Date();
-                let filteredExpenses = expenses;
-
-                if (reportType === 'mensal') {
-                    filteredExpenses = expenses.filter(e => {
-                        const date = new Date(e.date);
-                        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-                    });
-                } else if (reportType === 'anual') {
-                    filteredExpenses = expenses.filter(e => {
-                        const date = new Date(e.date);
-                        return date.getFullYear() === now.getFullYear();
-                    });
-                } else if (reportType === 'personalizado') {
-                    if (!startDate || !endDate) {
-                        alert('Por favor, selecione as datas de início e fim.');
-                        hideLoader();
-                        return;
-                    }
-                    const start = new Date(startDate);
-                    const end = new Date(endDate);
-                    filteredExpenses = expenses.filter(e => {
-                        const date = new Date(e.date);
-                        return date >= start && date <= end;
-                    });
-                }
+                // Preparar parâmetros para a API
+                const params = new URLSearchParams();
+                params.append('type', reportType);
 
                 if (categoryFilter !== 'all') {
-                    filteredExpenses = filteredExpenses.filter(e => e.category_id === parseInt(categoryFilter));
+                    params.append('category_id', categoryFilter);
                 }
 
-                // Calcular total de despesas dos lançamentos
-                const totalExpensesFromLancamentos = filteredExpenses.reduce((sum, e) => 
-                    e.type.toUpperCase() === 'DESPESA' ? sum + parseFloat(e.amount) : sum, 0);
-                
-                // Calcular total de despesas fixas (considerar apenas para relatório mensal)
-                let totalFixedExpenses = 0;
-                let fixedExpensesToShow = [];
-                
+                const now = new Date();
                 if (reportType === 'mensal') {
-                    totalFixedExpenses = fixedExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
-                    fixedExpensesToShow = fixedExpenses;
-                }
-                
-                // Total de despesas = lançamentos + despesas fixas
-                const totalExpenses = totalExpensesFromLancamentos + totalFixedExpenses;
-                
-      
-                
-                const totalIncomeFromExpenses = filteredExpenses.reduce((sum, e) => 
-                    e.type.toUpperCase() === 'RECEITA' ? sum + parseFloat(e.amount) : sum, 0);
-
-                const totalVariableIncome = variableIncomes.reduce((sum, v) => 
-                    sum + parseFloat(v.amount), 0);
-                
-                const totalIncome = parseFloat(incomeData.fixed_amount) + totalVariableIncome + totalIncomeFromExpenses;
-                const balance = totalIncome - totalExpenses;
-
-                let period;
-                if (reportType === 'mensal') {
-                    period = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                    params.append('month', now.getMonth() + 1);
+                    params.append('year', now.getFullYear());
                 } else if (reportType === 'anual') {
-                    period = now.getFullYear();
+                    params.append('year', now.getFullYear());
                 } else if (reportType === 'personalizado') {
-                    period = `${new Date(startDate).toLocaleDateString('pt-BR')} - ${new Date(endDate).toLocaleDateString('pt-BR')}`;
+                    params.append('start_date', startDate);
+                    params.append('end_date', endDate);
                 }
+
+                // Chamar API do backend
+                const reportData = await apiRequest(`/reports/generate/?${params.toString()}`);
+
+                // Carregar categorias para exibir nomes
+                const categories = await categoriesAPI.list();
+
+                const period = reportType === 'mensal'
+                    ? now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+                    : reportType === 'anual'
+                    ? now.getFullYear()
+                    : `${new Date(startDate).toLocaleDateString('pt-BR')} - ${new Date(endDate).toLocaleDateString('pt-BR')}`;
 
                 reportContent.innerHTML = `
                     <div class="dashboard-card">
-                        <h3>Relatório ${reportType === 'mensal' ? 'Mensal' : 'Anual'} - ${period}</h3>
-                        
+                        <h3>Relatório ${reportType === 'mensal' ? 'Mensal' : reportType === 'anual' ? 'Anual' : 'Personalizado'} - ${period}</h3>
+
                         <div class="stats-grid" style="margin-bottom: 30px;">
                             <div class="stat-card">
                                 <h4>Receita Total</h4>
-                                <div class="value">R$ ${totalIncome.toFixed(2)}</div>
+                                <div class="value">R$ ${parseFloat(reportData.total_income).toFixed(2)}</div>
                             </div>
-                            <div class="stat-card">
-                                <h4>Despesas de Lançamentos</h4>
-                                <div class="value">R$ ${totalExpensesFromLancamentos.toFixed(2)}</div>
-                            </div>
-                            ${reportType === 'mensal' ? `
-                                <div class="stat-card">
-                                    <h4>Despesas Fixas</h4>
-                                    <div class="value">R$ ${totalFixedExpenses.toFixed(2)}</div>
-                                </div>
-                            ` : ''}
                             <div class="stat-card">
                                 <h4>Despesas Total</h4>
-                                <div class="value">R$ ${totalExpenses.toFixed(2)}</div>
+                                <div class="value">R$ ${parseFloat(reportData.total_expense).toFixed(2)}</div>
                             </div>
                             <div class="stat-card">
                                 <h4>Saldo</h4>
-                                <div class="value" style="color: ${balance >= 0 ? '#28a745' : '#dc3545'}">
-                                    R$ ${balance.toFixed(2)}
+                                <div class="value" style="color: ${parseFloat(reportData.balance) >= 0 ? '#28a745' : '#dc3545'}">
+                                    R$ ${parseFloat(reportData.balance).toFixed(2)}
                                 </div>
                             </div>
                         </div>
-
-                        ${reportType === 'mensal' && fixedExpensesToShow.length > 0 ? `
-                            <div style="margin-bottom: 30px;">
-                                <h4 style="color: #333; margin-bottom: 15px;">Despesas Fixas do Mês</h4>
-                                <div class="table-container">
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Descrição</th>
-                                                <th>Categoria</th>
-                                                <th>Valor</th>
-                                                <th>Dia do Mês</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            ${fixedExpensesToShow.map(expense => {
-                                                const categoryName = getCategoryName(expense, categories);
-                                                return `
-                                                    <tr>
-                                                        <td>${expense.description}</td>
-                                                        <td>${categoryName}</td>
-                                                        <td>R$ ${parseFloat(expense.amount).toFixed(2)}</td>
-                                                        <td>Dia ${expense.day_of_month}</td>
-                                                    </tr>
-                                                `;
-                                            }).join('')}
-                                            <tr style="font-weight: bold; background: #f8f9fa;">
-                                                <td colspan="2">Total Despesas Fixas</td>
-                                                <td>R$ ${totalFixedExpenses.toFixed(2)}</td>
-                                                <td></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        ` : ''}
 
                         <div class="action-buttons" style="margin-bottom: 20px;">
                             <button class="btn btn-success" id="downloadPdfBtn">Baixar PDF</button>
                             <button class="btn" id="sendEmailBtn">Enviar por Email</button>
                         </div>
 
-                        ${filteredExpenses.length > 0 ? `
-                            <h4 style="color: #333; margin-bottom: 15px;">Lançamentos do Período</h4>
+                        ${reportData.transactions.length > 0 ? `
+                            <h4 style="color: #333; margin-bottom: 15px;">Transações do Período</h4>
                             <div class="table-container">
                                 <table>
                                     <thead>
@@ -2014,99 +1949,79 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        ${filteredExpenses.map(expense => {
-                                            const categoryName = getCategoryName(expense, categories);
-                                            
+                                        ${reportData.transactions.map(transaction => {
+                                            const categoryName = transaction.category_id ? getCategoryName({ category_id: transaction.category_id }, categories) : 'N/A';
+
                                             return `
                                                 <tr>
-                                                    <td>${new Date(expense.date).toLocaleDateString('pt-BR')}</td>
-                                                    <td>${expense.description}</td>
+                                                    <td>${new Date(transaction.date).toLocaleDateString('pt-BR')}</td>
+                                                    <td>${transaction.description}</td>
                                                     <td>${categoryName}</td>
                                                     <td>
-                                                        <span class="badge ${expense.type.toUpperCase() === 'RECEITA' ? 'badge-success' : 'badge-danger'}">
-                                                            ${expense.type.toUpperCase()}
+                                                        <span class="badge ${transaction.type.toUpperCase() === 'RECEITA' ? 'badge-success' : 'badge-danger'}">
+                                                            ${transaction.type.toUpperCase()}
                                                         </span>
                                                     </td>
-                                                    <td>R$ ${parseFloat(expense.amount).toFixed(2)}</td>
+                                                    <td>R$ ${parseFloat(transaction.amount).toFixed(2)}</td>
                                                 </tr>
                                             `;
                                         }).join('')}
                                     </tbody>
                                 </table>
                             </div>
-                        ` : '<div class="empty-state"><p>Nenhum lançamento encontrado para este período</p></div>'}
+                        ` : '<div class="empty-state"><p>Nenhuma transação encontrada para este período</p></div>'}
                     </div>
                 `;
 
-                document.getElementById('downloadPdfBtn').addEventListener('click', () => {
-                    downloadReportPDF({
-                        period,
-                        reportType,
-                        totalIncome,
-                        totalExpenses,
-                        totalExpensesFromLancamentos,
-                        totalFixedExpenses,
-                        balance,
-                        expenses: filteredExpenses,
-                        fixedExpenses: fixedExpensesToShow,
-                        categories
-                    });
-                });
+                // Armazenar dados para PDF e email
+                window.currentReportData = {
+                    ...reportData,
+                    period,
+                    reportType,
+                    startDate,
+                    endDate,
+                    categoryFilter
+                };
 
-                document.getElementById('sendEmailBtn').addEventListener('click', () => {
-                    alert('Funcionalidade de envio por email será implementada com o backend');
-                });
+                document.getElementById('downloadPdfBtn').addEventListener('click', downloadReportPDF);
+                document.getElementById('sendEmailBtn').addEventListener('click', sendReportEmail);
 
             } catch (error) {
                 console.error('Erro ao gerar relatório:', error);
-                reportContent.innerHTML = '<div class="dashboard-card"><p style="color: red;">Erro ao gerar relatório</p></div>';
+                reportContent.innerHTML = '<div class="dashboard-card"><p style="color: red;">Erro ao gerar relatório. Verifique se o backend está rodando.</p></div>';
             } finally {
                 hideLoader();
             }
         }
 
-        function downloadReportPDF(reportData) {
+        function downloadReportPDF() {
+            const reportData = window.currentReportData;
+            if (!reportData) {
+                alert('Nenhum relatório gerado para baixar.');
+                return;
+            }
+
             try {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-                
+
                 doc.setFontSize(20);
-                doc.text('Relatorio Financeiro', 20, 20);
-                
+                doc.text('Relatório Financeiro', 20, 20);
+
                 doc.setFontSize(12);
-                doc.text(`Periodo: ${reportData.period}`, 20, 35);
-                doc.text(`Receita Total: R$ ${reportData.totalIncome.toFixed(2)}`, 20, 45);
-                doc.text(`Despesas Total: R$ ${reportData.totalExpenses.toFixed(2)}`, 20, 55);
-                doc.text(`Saldo: R$ ${reportData.balance.toFixed(2)}`, 20, 65);
-                
+                doc.text(`Período: ${reportData.period}`, 20, 35);
+                doc.text(`Receita Total: R$ ${parseFloat(reportData.total_income).toFixed(2)}`, 20, 45);
+                doc.text(`Despesas Total: R$ ${parseFloat(reportData.total_expense).toFixed(2)}`, 20, 55);
+                doc.text(`Saldo: R$ ${parseFloat(reportData.balance).toFixed(2)}`, 20, 65);
+
                 let y = 80;
-                
-                if (reportData.fixedExpenses && reportData.fixedExpenses.length > 0) {
-                    doc.text('Despesas Fixas:', 20, y);
-                    y += 10;
-                    
-                    reportData.fixedExpenses.forEach(expense => {
-                        const categoryName = getCategoryName(expense, reportData.categories);
-                        const line = `${expense.description} (${categoryName}): R$ ${parseFloat(expense.amount).toFixed(2)}`;
-                        
-                        if (y > 280) {
-                            doc.addPage();
-                            y = 20;
-                        }
-                        doc.text(line, 20, y);
-                        y += 7;
-                    });
-                    
-                    y += 10;
-                }
-                
-                doc.text('Lancamentos:', 20, y);
+
+                doc.text('Transações:', 20, y);
                 y += 10;
-                
-                reportData.expenses.forEach(expense => {
-                    const categoryName = getCategoryName(expense, reportData.categories);
-                    const line = `${new Date(expense.date).toLocaleDateString('pt-BR')} - ${expense.description} (${categoryName}): R$ ${parseFloat(expense.amount).toFixed(2)}`;
-                    
+
+                reportData.transactions.forEach(transaction => {
+                    const line = `${new Date(transaction.date).toLocaleDateString('pt-BR')} - ${transaction.description}: R$ ${parseFloat(transaction.amount).toFixed(2)} (${transaction.type})`;
+
                     if (line.length > 80) {
                         const lines = doc.splitTextToSize(line, 170);
                         lines.forEach(l => {
@@ -2126,12 +2041,50 @@
                         y += 10;
                     }
                 });
-                
+
                 doc.save(`relatorio-${reportData.reportType}-${Date.now()}.pdf`);
                 alert('PDF baixado com sucesso!');
             } catch (error) {
                 console.error('Erro ao gerar PDF:', error);
-                alert('Erro ao gerar PDF. Verifique se a biblioteca jsPDF esta carregada.');
+                alert('Erro ao gerar PDF. Verifique se a biblioteca jsPDF está carregada.');
+            }
+        }
+
+        async function sendReportEmail() {
+            const reportData = window.currentReportData;
+            if (!reportData) {
+                alert('Nenhum relatório gerado para enviar.');
+                return;
+            }
+
+            const email = prompt('Digite o email para enviar o relatório:');
+            if (!email) return;
+
+            try {
+                showLoader();
+
+                // Preparar dados para envio
+                const emailData = {
+                    type: reportData.reportType,
+                    email: email,
+                    month: reportData.reportType === 'mensal' ? new Date().getMonth() + 1 : null,
+                    year: reportData.reportType === 'mensal' || reportData.reportType === 'anual' ? new Date().getFullYear() : null,
+                    start_date: reportData.startDate || null,
+                    end_date: reportData.endDate || null,
+                    category_id: reportData.categoryFilter !== 'all' ? parseInt(reportData.categoryFilter) : null
+                };
+
+                await apiRequest('/reports/email/', {
+                    method: 'POST',
+                    body: JSON.stringify(emailData)
+                });
+
+                alert('Relatório enviado por email com sucesso!');
+            } catch (error) {
+                console.error('Erro ao enviar email:', error);
+                alert('Erro ao enviar relatório por email.');
+            } finally {
+                hideLoader();
             }
         }
 
