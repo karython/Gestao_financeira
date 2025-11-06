@@ -6,7 +6,7 @@
     <title>Sistema de Gestão Financeira Pessoal</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/7075/7075618.png">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <style>
         * {
             margin: 0;
@@ -14,14 +14,14 @@
             box-sizing: border-box;
         }
 
-       html, body {
+        html, body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             height: 100%;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* bloqueia completamente a barra */
+            overflow: auto; /* permite rolar se necessário */
         }
 
 
@@ -209,13 +209,7 @@
             cursor: not-allowed;
         }
 
-        .btn-secondary {
-            background: #6c757d;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
+        
 
         .btn-danger {
             background: #dc3545;
@@ -329,26 +323,31 @@
         }
 
         .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            background: rgba(0,0,0,0.5) !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            z-index: 999999 !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
         }
 
         .modal {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
+            position: relative !important;
+            background: white !important;
+            padding: 30px !important;
+            border-radius: 10px !important;
+            max-width: 500px !important;
+            width: 90% !important;
+            max-height: 90vh !important;
+            overflow-y: auto !important;
+            z-index: 100000 !important;
         }
 
         .modal-header {
@@ -541,7 +540,7 @@
     <div id="app"></div>
 
     <script>
-        const API_BASE = 'https://gestao-financeira-tmqc.onrender.com/api';
+        const API_BASE = 'http://localhost:8000/api';
 
         // API Helper
         async function apiRequest(endpoint, options = {}) {
@@ -593,6 +592,45 @@
                 body: JSON.stringify(userData)
             })
         };
+
+        // Modal Helper
+        function createModal(content) {
+            // Remove any existing modal
+            const existingModal = document.querySelector('.modal-overlay');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Create modal elements
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'modal-overlay';
+            
+            const modalContainer = document.createElement('div');
+            modalContainer.className = 'modal';
+            
+            // Set content
+            modalContainer.innerHTML = content;
+            
+            // Add modal to overlay
+            modalOverlay.appendChild(modalContainer);
+            
+            // Add overlay to body
+            document.body.appendChild(modalOverlay);
+            
+            // Add close handlers
+            const closeBtn = modalContainer.querySelector('.close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => modalOverlay.remove());
+            }
+            
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) modalOverlay.remove();
+            });
+            
+            modalContainer.addEventListener('click', (e) => e.stopPropagation());
+            
+            return { modalOverlay, modalContainer };
+        }
 
         // Categories API
         const categoriesAPI = {
@@ -669,7 +707,8 @@
         // Dashboard API
         const dashboardAPI = {
             stats: () => apiRequest('/dashboard/stats/'),
-            recentTransactions: (limit = 10) => apiRequest(`/dashboard/recent-transactions/?limit=${limit}`)
+            recentTransactions: (limit = 10) => apiRequest(`/dashboard/recent-transactions/?limit=${limit}`),
+            allTransactions: () => apiRequest('/dashboard/all-transactions/')
         };
 
         // Helper function to find category name
@@ -725,7 +764,8 @@
             currentUser: null,
             currentView: 'dashboard',
             sidebarOpen: false,
-            isLoading: false
+            isLoading: false,
+            dashboardView: 'current' // 'current' or 'history'
         };
 
         // Initialize App
@@ -810,7 +850,6 @@
 
                 submitBtn.disabled = true;
                 errorDiv.style.display = 'none';
-                showLoader();
 
                 try {
                     if (isRegister) {
@@ -826,7 +865,6 @@
                         handleLogin({ ...profile, token: response.access_token });
                     }
                 } catch (err) {
-                    hideLoader();
                     errorDiv.textContent = 'Erro no login/cadastro. Verifique suas credenciais.';
                     errorDiv.style.display = 'block';
                 } finally {
@@ -836,27 +874,19 @@
         }
 
         function handleLogin(userData) {
-            showLoader();
             localStorage.setItem('currentUser', JSON.stringify(userData));
             state.currentUser = userData;
             state.isAuthenticated = true;
-            setTimeout(() => {
-                hideLoader();
-                renderApp();
-            }, 1000); // Simular tempo de carregamento
+            renderApp();
         }
 
         function handleLogout() {
-            showLoader();
-            setTimeout(() => {
-                localStorage.removeItem('currentUser');
-                localStorage.removeItem('token');
-                state.currentUser = null;
-                state.isAuthenticated = false;
-                state.currentView = 'dashboard';
-                hideLoader();
-                renderLogin();
-            }, 500); // Simular tempo de carregamento
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('token');
+            state.currentUser = null;
+            state.isAuthenticated = false;
+            state.currentView = 'dashboard';
+            renderLogin();
         }
 
         // Render App
@@ -954,15 +984,35 @@
         async function renderDashboard(content) {
             content.innerHTML = `
                 <h1 style="color: #333; margin-bottom: 30px;">Dashboard</h1>
+                <div style="margin-bottom: 20px;">
+                    <button class="btn" id="currentMonthBtn" style="margin-right: 10px;">Mês Atual</button>
+                    <button type="button" class="btn btn-success" id="historyBtn">Histórico Completo</button>
+                </div>
                 <div id="dashboardContent">Carregando...</div>
             `;
+
+            // Set active button based on current view
+            document.getElementById('currentMonthBtn').classList.toggle('btn', state.dashboardView === 'current');
+            document.getElementById('currentMonthBtn').classList.toggle('btn-secondary', state.dashboardView !== 'current');
+            document.getElementById('historyBtn').classList.toggle('btn', state.dashboardView === 'history');
+            document.getElementById('historyBtn').classList.toggle('btn-secondary', state.dashboardView !== 'history');
+
+            document.getElementById('currentMonthBtn').addEventListener('click', () => {
+                state.dashboardView = 'current';
+                renderDashboard(content);
+            });
+
+            document.getElementById('historyBtn').addEventListener('click', () => {
+                state.dashboardView = 'history';
+                renderDashboard(content);
+            });
 
             showLoader();
 
             try {
                 const [statsData, transactions] = await Promise.all([
                     dashboardAPI.stats(),
-                    dashboardAPI.recentTransactions()
+                    state.dashboardView === 'current' ? dashboardAPI.recentTransactions() : dashboardAPI.allTransactions()
                 ]);
 
                 const stats = {
@@ -970,7 +1020,7 @@
                     monthly_income: parseFloat(statsData.monthly_income),
                     monthly_expenses: parseFloat(statsData.monthly_expenses),
                     active_categories: statsData.active_categories,
-                    recentTransactions: transactions
+                    transactions: transactions
                 };
 
                 const dashContent = document.getElementById('dashboardContent');
@@ -995,8 +1045,8 @@
                     </div>
 
                     <div class="dashboard-card">
-                        <h3>Transações Recentes</h3>
-                        ${stats.recentTransactions.length > 0 ? `
+                        <h3>${state.dashboardView === 'current' ? 'Transações do Mês Atual' : 'Histórico Completo de Transações'}</h3>
+                        ${stats.transactions.length > 0 ? `
                             <div class="table-container">
                                 <table>
                                     <thead>
@@ -1008,7 +1058,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        ${stats.recentTransactions.map(expense => `
+                                        ${stats.transactions.map(expense => `
                                             <tr>
                                                 <td>${new Date(expense.date).toLocaleDateString('pt-BR')}</td>
                                                 <td>${expense.description}</td>
@@ -1023,7 +1073,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                        ` : '<div class="empty-state"><p>Nenhuma transação recente</p></div>'}
+                        ` : '<div class="empty-state"><p>Nenhuma transação encontrada</p></div>'}
                     </div>
                 `;
             } catch (error) {
@@ -1045,7 +1095,10 @@
                 </div>
             `;
 
-            document.getElementById('newCategoryBtn').addEventListener('click', () => showCategoryModal());
+            document.getElementById('newCategoryBtn').addEventListener('click', () => {
+                console.log('Clicou em Nova Categoria');
+                showCategoryModal();
+            });
 
             showLoader();
             await loadCategories();
@@ -1100,57 +1153,62 @@
         }
 
         function showCategoryModal(id = null, name = '', type = 'DESPESA') {
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div class="modal">
-                    <div class="modal-header">
-                        <h3>${id ? 'Editar Categoria' : 'Nova Categoria'}</h3>
-                        <button class="close-btn">&times;</button>
-                    </div>
-                    <form id="categoryForm">
-                        <div class="form-group">
-                            <label>Nome da Categoria</label>
-                            <input type="text" id="categoryName" required value="${name}">
-                        </div>
-                        <div class="form-group">
-                            <label>Tipo</label>
-                            <select id="categoryType">
-                                <option value="DESPESA" ${type === 'DESPESA' ? 'selected' : ''}>Despesa</option>
-                                <option value="RECEITA" ${type === 'RECEITA' ? 'selected' : ''}>Receita</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn">${id ? 'Salvar' : 'Adicionar'}</button>
-                    </form>
+            console.log('Executando showCategoryModal');
+
+            const content = `
+                <div class="modal-header">
+                    <h3>${id ? 'Editar Categoria' : 'Nova Categoria'}</h3>
+                    <button class="close-btn">&times;</button>
                 </div>
+                <form id="categoryForm">
+                    <div class="form-group">
+                        <label>Nome da Categoria</label>
+                        <input type="text" id="categoryName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select id="categoryType">
+                            <option value="DESPESA">Despesa</option>
+                            <option value="RECEITA">Receita</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">${id ? 'Salvar' : 'Adicionar'}</button>
+                </form>
             `;
 
-            document.body.appendChild(modal);
+            // Use helper to create and insert modal, and get references
+            const { modalOverlay, modalContainer } = createModal(content);
 
-            modal.querySelector('.close-btn').addEventListener('click', () => modal.remove());
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.remove();
-            });
+            // Ensure the form inputs have their initial values (in case helper altered DOM)
+            const nameInput = modalContainer.querySelector('#categoryName');
+            const typeSelect = modalContainer.querySelector('#categoryType');
+            if (nameInput) nameInput.value = name || '';
+            if (typeSelect) typeSelect.value = type || 'DESPESA';
 
-            document.getElementById('categoryForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = {
-                    name: document.getElementById('categoryName').value,
-                    type: document.getElementById('categoryType').value
-                };
+            // Form submit
+            const form = modalContainer.querySelector('#categoryForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const formData = {
+                        name: modalContainer.querySelector('#categoryName').value,
+                        type: modalContainer.querySelector('#categoryType').value
+                    };
 
-                try {
-                    if (id) {
-                        await categoriesAPI.update(id, formData);
-                    } else {
-                        await categoriesAPI.create(formData);
+                    try {
+                        if (id) {
+                            await categoriesAPI.update(id, formData);
+                        } else {
+                            await categoriesAPI.create(formData);
+                        }
+                        modalOverlay.remove();
+                        loadCategories();
+                    } catch (error) {
+                        console.error('Erro ao salvar categoria:', error);
+                        alert('Erro ao salvar categoria');
                     }
-                    modal.remove();
-                    loadCategories();
-                } catch (error) {
-                    alert('Erro ao salvar categoria');
-                }
-            });
+                });
+            }
         }
 
         window.editCategory = (id, name, type) => showCategoryModal(id, name, type);
@@ -1177,7 +1235,10 @@
                 </div>
             `;
 
-            document.getElementById('newExpenseBtn').addEventListener('click', () => showExpenseModal());
+            document.getElementById('newExpenseBtn').addEventListener('click', () => {
+                console.log('Clicou em Novo Lançamento');
+                showExpenseModal();
+            });
             showLoader();
             await loadExpenses();
             hideLoader();
@@ -1247,112 +1308,76 @@
         }
 
         async function showExpenseModal(expenseData = null) {
-            try {
-                // Mostrar loading
-                const loadingModal = document.createElement('div');
-                loadingModal.className = 'modal-overlay';
-                loadingModal.innerHTML = `
-                    <div class="modal">
-                        <div style="text-align: center; padding: 40px;">
-                            <p>Carregando categorias...</p>
-                        </div>
+            console.log('Executando showExpenseModal');
+
+            const content = `
+                <div class="modal-header">
+                    <h3>${expenseData ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <form id="expenseForm">
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <input type="text" id="expenseDescription" required value="${expenseData?.description || ''}">
                     </div>
-                `;
-                document.body.appendChild(loadingModal);
-
-                // Carregar categorias antes de abrir a modal
-                const categories = await categoriesAPI.list();
-                
-               
-                
-                // Remover loading
-                loadingModal.remove();
-                
-                if (!categories || categories.length === 0) {
-                    alert('Nenhuma categoria encontrada. Por favor, cadastre categorias primeiro.');
-                    return;
-                }
-                
-                const modal = document.createElement('div');
-                modal.className = 'modal-overlay';
-                modal.innerHTML = `
-                    <div class="modal">
-                        <div class="modal-header">
-                            <h3>${expenseData ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
-                            <button class="close-btn">&times;</button>
-                        </div>
-                        <form id="expenseForm">
-                            <div class="form-group">
-                                <label>Descrição</label>
-                                <input type="text" id="expenseDescription" required value="${expenseData?.description || ''}">
-                            </div>
-                            <div class="form-group">
-                                <label>Valor</label>
-                                <input type="number" step="0.01" id="expenseAmount" required value="${expenseData?.amount || ''}">
-                            </div>
-                            <div class="form-group">
-                                <label>Tipo</label>
-                                <select id="expenseType">
-                                    <option value="DESPESA" ${!expenseData || expenseData?.type === 'DESPESA' ? 'selected' : ''}>Despesa</option>
-                                    <option value="RECEITA" ${expenseData?.type === 'RECEITA' ? 'selected' : ''}>Receita</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Categoria</label>
-                                <select id="expenseCategory" required>
-                                    <option value="">Selecione...</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Data</label>
-                                <input type="date" id="expenseDate" required value="${expenseData?.date || new Date().toISOString().split('T')[0]}">
-                            </div>
-                            <button type="submit" class="btn">${expenseData ? 'Salvar' : 'Adicionar'}</button>
-                        </form>
+                    <div class="form-group">
+                        <label>Valor</label>
+                        <input type="number" step="0.01" id="expenseAmount" required value="${expenseData?.amount || ''}">
                     </div>
-                `;
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select id="expenseType">
+                            <option value="DESPESA" ${!expenseData || expenseData?.type === 'DESPESA' ? 'selected' : ''}>Despesa</option>
+                            <option value="RECEITA" ${expenseData?.type === 'RECEITA' ? 'selected' : ''}>Receita</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <select id="expenseCategory" required>
+                            <option value="">Carregando categorias...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Data</label>
+                        <input type="date" id="expenseDate" required value="${expenseData?.date || new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <button type="submit" class="btn">${expenseData ? 'Salvar' : 'Adicionar'}</button>
+                </form>
+            `;
 
-                document.body.appendChild(modal);
+            const { modalOverlay, modalContainer } = createModal(content);
 
-                const typeSelect = document.getElementById('expenseType');
-                const categorySelect = document.getElementById('expenseCategory');
+            const typeSelect = modalContainer.querySelector('#expenseType');
+            const categorySelect = modalContainer.querySelector('#expenseCategory');
+            const dateInput = modalContainer.querySelector('#expenseDate');
 
-                function updateCategories() {
-                    const type = typeSelect.value;
+            function updateCategories(categories) {
+                const type = typeSelect.value;
+                const filteredCategories = categories.filter(c => c.type.toUpperCase() === type);
+                categorySelect.innerHTML = '<option value="">Selecione...</option>' +
+                    filteredCategories.map(c => {
+                        const selected = expenseData?.category_id == c.id ? 'selected' : '';
+                        return `<option value="${c.id}" ${selected}>${c.name}</option>`;
+                    }).join('');
+            }
 
-                    // Filtrar comparando com minúsculas pois a API retorna 'despesa' e 'receita'
-                    const filteredCategories = categories.filter(c => c.type.toUpperCase() === type);
-       
-                    
-                    categorySelect.innerHTML = '<option value="">Selecione...</option>' +
-                        filteredCategories.map(c => {
-                            const selected = expenseData?.category_id == c.id ? 'selected' : '';
-                            return `<option value="${c.id}" ${selected}>${c.name}</option>`;
-                        }).join('');
-                    
-
+            typeSelect.addEventListener('change', () => {
+                if (window.loadedCategories) {
+                    updateCategories(window.loadedCategories);
                 }
+            });
 
-                typeSelect.addEventListener('change', updateCategories);
-                // Inicializar categorias
-                updateCategories();
-
-                modal.querySelector('.close-btn').addEventListener('click', () => modal.remove());
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) modal.remove();
-                });
-
-                document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+            const form = modalContainer.querySelector('#expenseForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const formData = {
-                        description: document.getElementById('expenseDescription').value,
-                        amount: parseFloat(document.getElementById('expenseAmount').value),
-                        category_id: parseInt(document.getElementById('expenseCategory').value),
-                        date: document.getElementById('expenseDate').value,
-                        type: document.getElementById('expenseType').value.toLowerCase()
+                        description: modalContainer.querySelector('#expenseDescription').value,
+                        amount: parseFloat(modalContainer.querySelector('#expenseAmount').value),
+                        category_id: parseInt(modalContainer.querySelector('#expenseCategory').value),
+                        date: modalContainer.querySelector('#expenseDate').value,
+                        type: modalContainer.querySelector('#expenseType').value.toLowerCase()
                     };
-
-                    
 
                     try {
                         if (expenseData) {
@@ -1360,16 +1385,23 @@
                         } else {
                             await expensesAPI.create(formData);
                         }
-                        modal.remove();
+                        modalOverlay.remove();
                         loadExpenses();
                     } catch (error) {
                         console.error('Erro ao salvar:', error);
                         alert('Erro ao salvar lançamento');
                     }
                 });
+            }
+
+            // Load categories
+            try {
+                const categories = await categoriesAPI.list();
+                window.loadedCategories = categories;
+                updateCategories(categories);
             } catch (error) {
                 console.error('Erro ao carregar categorias:', error);
-                alert('Erro ao carregar categorias. Tente novamente.');
+                categorySelect.innerHTML = '<option value="">Erro ao carregar categorias</option>';
             }
         }
 
@@ -1400,7 +1432,10 @@
                 </div>
             `;
 
-            document.getElementById('newFixedExpenseBtn').addEventListener('click', () => showFixedExpenseModal());
+            document.getElementById('newFixedExpenseBtn').addEventListener('click', () => {
+                console.log('Clicou em Nova Despesa Fixa');
+                showFixedExpenseModal();
+            });
             showLoader();
             await loadFixedExpenses();
             hideLoader();
@@ -1472,90 +1507,48 @@
         }
 
         async function showFixedExpenseModal(expenseData = null) {
-            try {
-                // Mostrar loading
-                const loadingModal = document.createElement('div');
-                loadingModal.className = 'modal-overlay';
-                loadingModal.innerHTML = `
-                    <div class="modal">
-                        <div style="text-align: center; padding: 40px;">
-                            <p>Carregando categorias...</p>
-                        </div>
+            console.log('Executando showFixedExpenseModal');
+
+            const content = `
+                <div class="modal-header">
+                    <h3>${expenseData ? 'Editar Despesa Fixa' : 'Nova Despesa Fixa'}</h3>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <form id="fixedExpenseForm">
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <input type="text" id="fixedExpenseDescription" required value="${expenseData?.description || ''}">
                     </div>
-                `;
-                document.body.appendChild(loadingModal);
-
-                // Carregar categorias antes de abrir a modal
-                const categories = await categoriesAPI.list();
-                
-       
-                
-                // Remover loading
-                loadingModal.remove();
-                
-                // Filtrar categorias de despesa (comparar com maiúsculas pois a API retorna minúsculo)
-                const despesaCategories = categories.filter(c => c.type.toUpperCase() === 'DESPESA');
-                
-               
-                
-                if (despesaCategories.length === 0) {
-                    alert('Nenhuma categoria de despesa encontrada. Por favor, cadastre categorias de despesa primeiro.');
-                    return;
-                }
-                
-                const modal = document.createElement('div');
-                modal.className = 'modal-overlay';
-                modal.innerHTML = `
-                    <div class="modal">
-                        <div class="modal-header">
-                            <h3>${expenseData ? 'Editar Despesa Fixa' : 'Nova Despesa Fixa'}</h3>
-                            <button class="close-btn">&times;</button>
-                        </div>
-                        <form id="fixedExpenseForm">
-                            <div class="form-group">
-                                <label>Descrição</label>
-                                <input type="text" id="fixedExpenseDescription" required value="${expenseData?.description || ''}">
-                            </div>
-                            <div class="form-group">
-                                <label>Valor</label>
-                                <input type="number" step="0.01" id="fixedExpenseAmount" required value="${expenseData?.amount || ''}">
-                            </div>
-                            <div class="form-group">
-                                <label>Categoria</label>
-                                <select id="fixedExpenseCategory" required>
-                                    <option value="">Selecione...</option>
-                                    ${despesaCategories.map(c => {
-                                        const selected = expenseData?.category_id == c.id ? 'selected' : '';
-                                        return `<option value="${c.id}" ${selected}>${c.name}</option>`;
-                                    }).join('')}
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Dia do Mês (1-31)</label>
-                                <input type="number" min="1" max="31" id="fixedExpenseDay" required value="${expenseData?.day_of_month || ''}">
-                            </div>
-                            <button type="submit" class="btn">${expenseData ? 'Salvar' : 'Adicionar'}</button>
-                        </form>
+                    <div class="form-group">
+                        <label>Valor</label>
+                        <input type="number" step="0.01" id="fixedExpenseAmount" required value="${expenseData?.amount || ''}">
                     </div>
-                `;
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <select id="fixedExpenseCategory" required>
+                            <option value="">Carregando categorias...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Dia do Mês (1-31)</label>
+                        <input type="number" min="1" max="31" id="fixedExpenseDay" required value="${expenseData?.day_of_month || ''}">
+                    </div>
+                    <button type="submit" class="btn">${expenseData ? 'Salvar' : 'Adicionar'}</button>
+                </form>
+            `;
 
-                document.body.appendChild(modal);
+            const { modalOverlay, modalContainer } = createModal(content);
 
-                modal.querySelector('.close-btn').addEventListener('click', () => modal.remove());
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) modal.remove();
-                });
-
-                document.getElementById('fixedExpenseForm').addEventListener('submit', async (e) => {
+            const form = modalContainer.querySelector('#fixedExpenseForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const formData = {
-                        description: document.getElementById('fixedExpenseDescription').value,
-                        amount: parseFloat(document.getElementById('fixedExpenseAmount').value),
-                        category_id: parseInt(document.getElementById('fixedExpenseCategory').value),
-                        day_of_month: parseInt(document.getElementById('fixedExpenseDay').value)
+                        description: modalContainer.querySelector('#fixedExpenseDescription').value,
+                        amount: parseFloat(modalContainer.querySelector('#fixedExpenseAmount').value),
+                        category_id: parseInt(modalContainer.querySelector('#fixedExpenseCategory').value),
+                        day_of_month: parseInt(modalContainer.querySelector('#fixedExpenseDay').value)
                     };
-
-                  
 
                     try {
                         if (expenseData) {
@@ -1563,16 +1556,29 @@
                         } else {
                             await fixedExpensesAPI.create(formData);
                         }
-                        modal.remove();
+                        modalOverlay.remove();
                         loadFixedExpenses();
                     } catch (error) {
                         console.error('Erro ao salvar:', error);
                         alert('Erro ao salvar despesa fixa');
                     }
                 });
+            }
+
+            // Load categories
+            try {
+                const categories = await categoriesAPI.list();
+                const despesaCategories = categories.filter(c => c.type.toUpperCase() === 'DESPESA');
+                const categorySelect = modalContainer.querySelector('#fixedExpenseCategory');
+                categorySelect.innerHTML = '<option value="">Selecione...</option>' +
+                    despesaCategories.map(c => {
+                        const selected = expenseData?.category_id == c.id ? 'selected' : '';
+                        return `<option value="${c.id}" ${selected}>${c.name}</option>`;
+                    }).join('');
             } catch (error) {
                 console.error('Erro ao carregar categorias:', error);
-                alert('Erro ao carregar categorias. Tente novamente.');
+                const categorySelect = modalContainer.querySelector('#fixedExpenseCategory');
+                if (categorySelect) categorySelect.innerHTML = '<option value="">Erro ao carregar categorias</option>';
             }
         }
 
@@ -1699,60 +1705,55 @@
         }
 
         function showVariableIncomeModal(incomeData = null) {
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div class="modal">
-                    <div class="modal-header">
-                        <h3>${incomeData ? 'Editar Receita Variável' : 'Nova Receita Variável'}</h3>
-                        <button class="close-btn">&times;</button>
-                    </div>
-                    <form id="variableIncomeForm">
-                        <div class="form-group">
-                            <label>Descrição</label>
-                            <input type="text" id="variableIncomeDescription" required value="${incomeData?.description || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label>Valor</label>
-                            <input type="number" step="0.01" id="variableIncomeAmount" required value="${incomeData?.amount || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label>Válido Até</label>
-                            <input type="date" id="variableIncomeValidUntil" value="${incomeData?.valid_until || ''}">
-                        </div>
-                        <button type="submit" class="btn">${incomeData ? 'Salvar' : 'Adicionar'}</button>
-                    </form>
+            const content = `
+                <div class="modal-header">
+                    <h3>${incomeData ? 'Editar Receita Variável' : 'Nova Receita Variável'}</h3>
+                    <button class="close-btn">&times;</button>
                 </div>
+                <form id="variableIncomeForm">
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <input type="text" id="variableIncomeDescription" required value="${incomeData?.description || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Valor</label>
+                        <input type="number" step="0.01" id="variableIncomeAmount" required value="${incomeData?.amount || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Válido Até</label>
+                        <input type="date" id="variableIncomeValidUntil" value="${incomeData?.valid_until || ''}">
+                    </div>
+                    <button type="submit" class="btn">${incomeData ? 'Salvar' : 'Adicionar'}</button>
+                </form>
             `;
 
-            document.body.appendChild(modal);
+            const { modalOverlay, modalContainer } = createModal(content);
 
-            modal.querySelector('.close-btn').addEventListener('click', () => modal.remove());
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.remove();
-            });
+            const form = modalContainer.querySelector('#variableIncomeForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const formData = {
+                        description: modalContainer.querySelector('#variableIncomeDescription').value,
+                        amount: parseFloat(modalContainer.querySelector('#variableIncomeAmount').value),
+                        valid_until: modalContainer.querySelector('#variableIncomeValidUntil').value,
+                        is_active: true
+                    };
 
-            document.getElementById('variableIncomeForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = {
-                    description: document.getElementById('variableIncomeDescription').value,
-                    amount: parseFloat(document.getElementById('variableIncomeAmount').value),
-                    valid_until: document.getElementById('variableIncomeValidUntil').value,
-                    is_active: true
-                };
-
-                try {
-                    if (incomeData) {
-                        await incomeAPI.updateVariable(incomeData.id, formData);
-                    } else {
-                        await incomeAPI.createVariable(formData);
+                    try {
+                        if (incomeData) {
+                            await incomeAPI.updateVariable(incomeData.id, formData);
+                        } else {
+                            await incomeAPI.createVariable(formData);
+                        }
+                        modalOverlay.remove();
+                        loadIncome();
+                    } catch (error) {
+                        console.error('Erro ao salvar receita variável:', error);
+                        alert('Erro ao salvar receita variável');
                     }
-                    modal.remove();
-                    loadIncome();
-                } catch (error) {
-                    alert('Erro ao salvar receita variável');
-                }
-            });
+                });
+            }
         }
 
         window.editVariableIncome = (id) => {
@@ -1782,10 +1783,13 @@
                         <select id="reportType">
                             <option value="mensal">Mensal</option>
                             <option value="anual">Anual</option>
+                            <option value="personalizado">Período Personalizado</option>
                         </select>
                         <select id="categoryFilter">
                             <option value="all">Todas as Categorias</option>
                         </select>
+                        <input type="date" id="startDate" placeholder="Data de início" style="display: none;">
+                        <input type="date" id="endDate" placeholder="Data de fim" style="display: none;">
                         <button class="btn" id="generateReportBtn">Gerar Relatório</button>
                     </div>
                 </div>
@@ -1809,12 +1813,35 @@
                 hideLoader();
             }
 
+            // Event listener para mostrar/ocultar campos de data
+            document.getElementById('reportType').addEventListener('change', function() {
+                const reportType = this.value;
+                const startDateInput = document.getElementById('startDate');
+                const endDateInput = document.getElementById('endDate');
+
+                if (reportType === 'personalizado') {
+                    startDateInput.style.display = 'block';
+                    endDateInput.style.display = 'block';
+                    startDateInput.required = true;
+                    endDateInput.required = true;
+                } else {
+                    startDateInput.style.display = 'none';
+                    endDateInput.style.display = 'none';
+                    startDateInput.required = false;
+                    endDateInput.required = false;
+                    startDateInput.value = '';
+                    endDateInput.value = '';
+                }
+            });
+
             document.getElementById('generateReportBtn').addEventListener('click', generateReport);
         }
 
         async function generateReport() {
             const reportType = document.getElementById('reportType').value;
             const categoryFilter = document.getElementById('categoryFilter').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
             const reportContent = document.getElementById('reportContent');
 
             reportContent.innerHTML = '<div class="dashboard-card"><p>Gerando relatório...</p></div>';
@@ -1837,10 +1864,22 @@
                         const date = new Date(e.date);
                         return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
                     });
-                } else {
+                } else if (reportType === 'anual') {
                     filteredExpenses = expenses.filter(e => {
                         const date = new Date(e.date);
                         return date.getFullYear() === now.getFullYear();
+                    });
+                } else if (reportType === 'personalizado') {
+                    if (!startDate || !endDate) {
+                        alert('Por favor, selecione as datas de início e fim.');
+                        hideLoader();
+                        return;
+                    }
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    filteredExpenses = expenses.filter(e => {
+                        const date = new Date(e.date);
+                        return date >= start && date <= end;
                     });
                 }
 
@@ -1875,9 +1914,14 @@
                 const totalIncome = parseFloat(incomeData.fixed_amount) + totalVariableIncome + totalIncomeFromExpenses;
                 const balance = totalIncome - totalExpenses;
 
-                const period = reportType === 'mensal' 
-                    ? now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-                    : now.getFullYear();
+                let period;
+                if (reportType === 'mensal') {
+                    period = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                } else if (reportType === 'anual') {
+                    period = now.getFullYear();
+                } else if (reportType === 'personalizado') {
+                    period = `${new Date(startDate).toLocaleDateString('pt-BR')} - ${new Date(endDate).toLocaleDateString('pt-BR')}`;
+                }
 
                 reportContent.innerHTML = `
                     <div class="dashboard-card">

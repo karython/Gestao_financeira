@@ -6,6 +6,7 @@ from sqlalchemy import select, extract, func
 from typing import Optional
 from decimal import Decimal
 from io import BytesIO
+from datetime import date
 
 from api.db.session import get_db
 from api.models.user import User
@@ -23,26 +24,32 @@ router = APIRouter()
 async def generate_report(
     type: str = Query(..., description="Tipo do relatório: mensal, anual, categoria"),
     category_id: Optional[int] = None,
-    month: int = Query(..., ge=1, le=12),
-    year: int = Query(..., ge=2000),
+    month: Optional[int] = Query(None, ge=1, le=12),
+    year: Optional[int] = Query(None, ge=2000),
+    start_date: Optional[date] = Query(None, description="Data de início para filtro (formato YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="Data de fim para filtro (formato YYYY-MM-DD)"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     query = select(Expense).where(Expense.user_id == current_user.id)
 
-    if type == "mensal":
-        query = query.where(
-            extract('month', Expense.date) == month,
-            extract('year', Expense.date) == year
-        )
-    elif type == "anual":
-        query = query.where(extract('year', Expense.date) == year)
-    elif type == "categoria" and category_id:
-        query = query.where(
-            Expense.category_id == category_id,
-            extract('month', Expense.date) == month,
-            extract('year', Expense.date) == year
-        )
+    # Apply date filtering
+    if start_date and end_date:
+        query = query.where(Expense.date.between(start_date, end_date))
+    else:
+        if type == "mensal" and month and year:
+            query = query.where(
+                extract('month', Expense.date) == month,
+                extract('year', Expense.date) == year
+            )
+        elif type == "anual" and year:
+            query = query.where(extract('year', Expense.date) == year)
+        elif type == "categoria" and category_id and month and year:
+            query = query.where(
+                Expense.category_id == category_id,
+                extract('month', Expense.date) == month,
+                extract('year', Expense.date) == year
+            )
 
     result = await db.execute(query)
     expenses = result.scalars().all()
@@ -155,12 +162,14 @@ async def generate_report(
 async def generate_pdf_report(
     type: str = Query(...),
     category_id: Optional[int] = None,
-    month: int = Query(..., ge=1, le=12),
-    year: int = Query(..., ge=2000),
+    month: Optional[int] = Query(None, ge=1, le=12),
+    year: Optional[int] = Query(None, ge=2000),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    report_data = await generate_report(type, category_id, month, year, current_user, db)
+    report_data = await generate_report(type, category_id, month, year, start_date, end_date, current_user, db)
     pdf_buffer = generate_report_pdf(report_data, current_user.name)
     
     return StreamingResponse(
@@ -181,6 +190,8 @@ async def email_report(
         report_request.category_id,
         report_request.month,
         report_request.year,
+        report_request.start_date,
+        report_request.end_date,
         current_user,
         db
     )

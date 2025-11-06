@@ -119,11 +119,29 @@ async def get_recent_transactions(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    now = datetime.now()
+    result = await db.execute(
+        select(Expense)
+        .where(
+            Expense.user_id == current_user.id,
+            extract('month', Expense.date) == now.month,
+            extract('year', Expense.date) == now.year
+        )
+        .order_by(Expense.date.desc(), Expense.created_at.desc())
+        .limit(limit)
+    )
+    return result.scalars().all()
+
+
+@router.get("/all-transactions/", response_model=List[ExpenseResponse])
+async def get_all_transactions(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
     result = await db.execute(
         select(Expense)
         .where(Expense.user_id == current_user.id)
         .order_by(Expense.date.desc(), Expense.created_at.desc())
-        .limit(limit)
     )
     return result.scalars().all()
 

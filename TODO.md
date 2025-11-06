@@ -1,6 +1,11 @@
-# TODO: Update Dependencies for Python 3.13 and Render Deployment
+# TODO: Adicionar opção de período personalizado nos relatórios
 
-- [x] Update runtime.txt to python-3.13.0
-- [x] Update requirements.txt with latest compatible versions
-- [x] Test installation with pip install --dry-run
-- [ ] Verify app runs with updated dependencies
+## Tarefas Pendentes
+
+- [ ] Adicionar campos de data de início e fim na interface de relatórios (index.html)
+- [ ] Modificar a função generateReport() para coletar e enviar start_date e end_date
+- [ ] Ajustar a exibição do período no relatório para mostrar datas personalizadas
+- [ ] Testar a funcionalidade com datas personalizadas
+
+## Status
+Aguardando implementação das modificações no frontend.
