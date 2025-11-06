@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, extract
 from typing import List, Optional
+from datetime import datetime
 
 from api.db.session import get_db
 from api.models.user import User
@@ -17,22 +18,30 @@ router = APIRouter()
 async def list_expenses(
     month: Optional[int] = Query(None, ge=1, le=12),
     year: Optional[int] = Query(None, ge=2000),
+    start_date: Optional[str] = Query(None, description="Data inicial (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="Data final (YYYY-MM-DD)"),
     type: Optional[ExpenseType] = None,
     category_id: Optional[int] = None,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     query = select(Expense).where(Expense.user_id == current_user.id)
-    
+
     if month:
         query = query.where(extract('month', Expense.date) == month)
     if year:
         query = query.where(extract('year', Expense.date) == year)
+    if start_date:
+        start = datetime.strptime(start_date, "%Y-%m-%d").date()
+        query = query.where(Expense.date >= start)
+    if end_date:
+        end = datetime.strptime(end_date, "%Y-%m-%d").date()
+        query = query.where(Expense.date <= end)
     if type:
         query = query.where(Expense.type == type)
     if category_id:
         query = query.where(Expense.category_id == category_id)
-    
+
     result = await db.execute(query.order_by(Expense.date.desc()))
     return result.scalars().all()
 
