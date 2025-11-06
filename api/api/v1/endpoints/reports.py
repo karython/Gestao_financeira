@@ -7,11 +7,14 @@ from typing import Optional
 from decimal import Decimal
 from io import BytesIO
 from datetime import date
+import calendar
+from dateutil.relativedelta import relativedelta
 
 from api.db.session import get_db
 from api.models.user import User
 from api.models.expense import Expense, ExpenseType
 from api.models.income import Income, VariableIncome, FixedIncome
+from api.models.fixed_expense import FixedExpense
 from api.schemas.reports import ReportRequest, ReportEmailRequest
 from api.api.deps import get_current_user
 from api.services.pdf_service import generate_report_pdf
@@ -54,6 +57,60 @@ async def generate_report(
     result = await db.execute(query)
     expenses = result.scalars().all()
 
+    # Query fixed expenses with date filtering
+    fixed_expenses_query = select(FixedExpense).where(
+        FixedExpense.user_id == current_user.id,
+        FixedExpense.is_active == True
+    )
+
+    if start_date and end_date:
+        # For custom date range, include all active fixed expenses (they repeat monthly)
+        pass
+    elif type == "mensal" and month and year:
+        # For monthly reports, include all active fixed expenses (they are monthly)
+        pass  # No additional filter needed
+    elif type == "anual" and year:
+        # For annual reports, include all active fixed expenses
+        pass  # No additional filter needed
+    elif type == "categoria" and category_id and month and year:
+        # For category reports, filter by category and include all for the month
+        fixed_expenses_query = fixed_expenses_query.where(FixedExpense.category_id == category_id)
+
+    result_fixed = await db.execute(fixed_expenses_query)
+    fixed_expenses = result_fixed.scalars().all()
+
+    # Determine report start and end dates
+    if start_date and end_date:
+        report_start = start_date
+        report_end = end_date
+    elif type == "mensal" and month and year:
+        report_start = date(year, month, 1)
+        report_end = date(year, month, calendar.monthrange(year, month)[1])
+    elif type == "anual" and year:
+        report_start = date(year, 1, 1)
+        report_end = date(year, 12, 31)
+    elif type == "categoria" and category_id and month and year:
+        report_start = date(year, month, 1)
+        report_end = date(year, month, calendar.monthrange(year, month)[1])
+    else:
+        today = date.today()
+        report_start = date(today.year, today.month, 1)
+        report_end = date(today.year, today.month, calendar.monthrange(today.year, today.month)[1])
+
+    # Calculate fixed expenses multiplier and date function
+    if type == "anual" and year:
+        fixed_multiplier = 12
+        fixed_date_func = lambda fe: date(year, 1, fe.day_of_month)
+    elif (type == "mensal" or type == "categoria") and month and year:
+        fixed_multiplier = 1
+        fixed_date_func = lambda fe: date(year, month, fe.day_of_month)
+    elif start_date and end_date:
+        fixed_multiplier = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month + 1
+        fixed_date_func = lambda fe: start_date
+    else:
+        fixed_multiplier = 1
+        fixed_date_func = lambda fe: date.today()
+
     # Calcular total de entradas (receitas)
     # Receitas fixas mensais (Income.fixed_amount)
     result_income = await db.execute(
@@ -91,6 +148,9 @@ async def generate_report(
     # Total de saídas (despesas)
     total_expense = sum(e.amount for e in expenses if e.type == ExpenseType.DESPESA)
 
+    fixed_expenses_sum = sum(fe.amount for fe in fixed_expenses)
+    total_expense += fixed_multiplier * fixed_expenses_sum
+
     # Fetch VariableIncome records
     result_var_incomes = await db.execute(
         select(VariableIncome)
@@ -124,6 +184,28 @@ async def generate_report(
             "date": e.date,
             "category_id": e.category_id
         })
+
+    # Add fixed expense transactions for each month in the period
+    current_date = report_start
+    while current_date <= report_end:
+        for fe in fixed_expenses:
+            if category_id is None or fe.category_id == category_id:
+                # Determine the day for this month, adjusting if necessary
+                try:
+                    trans_date = date(current_date.year, current_date.month, fe.day_of_month)
+                except ValueError:
+                    # If day_of_month is invalid for the month, use the last day
+                    last_day = calendar.monthrange(current_date.year, current_date.month)[1]
+                    trans_date = date(current_date.year, current_date.month, last_day)
+                transactions.append({
+                    "id": fe.id,
+                    "description": fe.description,
+                    "amount": fe.amount,
+                    "type": "despesa",
+                    "date": trans_date,
+                    "category_id": fe.category_id
+                })
+        current_date += relativedelta(months=1)
 
     # Add variable income transactions
     for vi in variable_incomes_list:

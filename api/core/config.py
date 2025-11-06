@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000", "https://karython.github.io", "http://127.0.0.1:5500", "http://127.0.0.1:5500", "https://gestao-financeira-tmqc.onrender.com", "null"]
+    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000", "https://karython.github.io", "http://127.0.0.1:5500", "http://127.0.0.1:5501", "https://gestao-financeira-tmqc.onrender.com", "http://127.0.0.1:46174", "null"]
     
     # Email (para relatórios)
     SMTP_HOST: str = "smtp.gmail.com"

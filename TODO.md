@@ -1,11 +1,4 @@
-# TODO: Adicionar opção de período personalizado nos relatórios
+# TODO: Fix CORS 400 Bad Request on OPTIONS /api/auth/login/
 
-## Tarefas Pendentes
-
-- [ ] Adicionar campos de data de início e fim na interface de relatórios (index.html)
-- [ ] Modificar a função generateReport() para coletar e enviar start_date e end_date
-- [ ] Ajustar a exibição do período no relatório para mostrar datas personalizadas
-- [ ] Testar a funcionalidade com datas personalizadas
-
-## Status
-Aguardando implementação das modificações no frontend.
+- [x] Remove duplicate CORSMiddleware in app.py
+- [x] Add "http://127.0.0.1:46174" to CORS_ORIGINS in api/core/config.py

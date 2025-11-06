@@ -58,20 +58,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-origins = [
-    "https://karython.github.io",
-    "https://gestao-financeira-tmqc.onrender.com",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,          # use a lista explícita em produção
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Temporary middleware to log request bodies and responses for debugging 422s
 logger = logging.getLogger("app.request_logger")
