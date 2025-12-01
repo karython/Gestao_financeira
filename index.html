@@ -1003,10 +1003,7 @@
                 const dashContent = document.getElementById('dashboardContent');
                 dashContent.innerHTML = `
                     <div class="stats-grid">
-                        <div class="stat-card">
-                            <h4>Saldo Total</h4>
-                            <div class="value">R$ ${stats.total_balance.toFixed(2)}</div>
-                        </div>
+                        
                         <div class="stat-card">
                             <h4>Receita Mensal</h4>
                             <div class="value">R$ ${stats.monthly_income.toFixed(2)}</div>
@@ -1015,10 +1012,7 @@
                             <h4>Despesas Mensal</h4>
                             <div class="value">R$ ${stats.monthly_expenses.toFixed(2)}</div>
                         </div>
-                        <div class="stat-card">
-                            <h4>Categorias Ativas</h4>
-                            <div class="value">${stats.active_categories}</div>
-                        </div>
+                        
                     </div>
 
                     <div class="dashboard-card">
